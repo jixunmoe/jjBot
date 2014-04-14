@@ -1,0 +1,54 @@
+
+  Project jjBot
+     Ver  1.0
+
+  By Jixun, 
+    http://jixun.org/
+
+  Github: http://github.com/JixunMoe/jjBot/
+
+  * Any question, problem or improvement,
+    please inform me by create a new issue.
+
+  Command line usage:
+    --offline
+      Go to offline mode, disable all api and Auth to tencent server.
+
+    --help
+      Display this message
+
+    --qnum <QQNum>
+      Force the account to login with.
+
+    --passwd <Password>
+      Force the password for bot to login.
+
+    --config <Path to config.yaml>
+      Specify the config file to use, blank to './config.yaml'
+
+  Developer options:
+    --debug module
+      Ask dev for the module list avilible.
+        Current list for jjBot core:
+          web: Front-end server route for plugin.
+          api: Capture all API request.
+          api_data: Capture all API request and its data.
+          event: Capture all plugin event call.
+          group: Group info request loop.
+        Also, plugin devs can define there own debug flag.
+
+    --noWebLogin
+      > Security WARNING <
+      Anyone can access front-end without login.
+
+  Example:
+    Login with QQ 10000, password "A_B-C 1" (without quote):
+      node Boot.js --qnum 10000 --passwd "A_B-C 1"
+
+    Boot with another config file and password from command line:
+      node Boot.js --config jjBot.2.yaml --passwd 123456.salt.xxxxx
+
+    Debug plugin without login and debug plugin and web module:
+      node Boot.js --config jjBot.debug.yaml --offline --debug plugin web
+
+  Enjoy.

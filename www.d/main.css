@@ -1,0 +1,10 @@
+html, body {
+	font-family: 'Microsoft JHengHei UI', 'Microsoft YaHei UI', '微软雅黑', 'Consolas', monospace;
+	font-size: 16px;
+	padding-top: 3em;
+}
+
+.btn:active:focus, .btn:focus {
+	/* 太难看了啊喂! */
+	outline: none;
+}

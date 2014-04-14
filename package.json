@@ -1,0 +1,23 @@
+{
+	"name": "jjBot",
+	"description": "Just another Javascript Bot for webqq",
+	"version": "0.0-Buggy",
+	"keywords": ["jjBot"],
+	"maintainers": [{
+		"name": "Jixun.Moe",
+		"email": "Jixun.Moe@gmail.com",
+		"web": "http://jixun.org/"
+	}],
+	"dependencies": {
+		"https://www.npmjs.org/package/sequence": "3.0.0"
+	},
+	"repositories": [{
+			"type": "git",
+			"url": "https://github.com/JixunMoe/jjBot.git"
+	}],
+	"licenses": [{
+		"name": "MIT",
+		"url": "https://raw.githubusercontent.com/JixunMoe/jjBot/master/LICENSE"
+	}],
+	"homepage": "https://github.com/JixunMoe/jjBot"
+}

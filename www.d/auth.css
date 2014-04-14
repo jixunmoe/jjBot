@@ -1,0 +1,56 @@
+html, body {
+	font-family: 'Microsoft JHengHei', '微软雅黑', 'Consolas', monospace;
+	font-size: 16px;
+	background: #eee;
+	padding: 2em;
+	max-width: 40em;
+}
+
+.box {
+	background: skyblue;
+	margin: auto 0;
+	padding: 1em;
+}
+
+#code {
+	border: 1px solid #ccc;
+}
+
+input[name] {
+	width: 30em;
+}
+
+label {
+	cursor: pointer;
+	min-width: 5em;
+	display: inline-block;
+}
+
+.c {
+	margin: 2em;
+}
+
+.align-center {
+	text-align: center;
+}
+
+.pull-right {
+	float: right;
+}
+
+
+ul#groupmsg>li {
+	cursor: pointer;
+}
+
+.labelWidth > label {
+	width: 5em;
+}
+
+.top-align{
+	vertical-align: top;
+}
+
+textarea {
+	margin: 0 5px;
+}

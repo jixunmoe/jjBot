@@ -1,0 +1,40 @@
+# Use space, not tabs.
+
+# Max Retry for tx APIs
+maxRetry: 3
+
+# Your login info
+qqnum:  '10000'
+passwd: 'Your Password'
+
+# Spec. Path for your file/directorys.
+logPath:  './jjBot.log'
+webPath:  './www.d/'
+cachePath: './cache.d/'
+plugPath: './plug.d/'
+
+# Which port to run web server?
+port: 2333
+
+# Command Prefix.
+# E.g. jj, will accept commands like jj/hello
+cmdPrefix: 'jj'
+
+# User Agent to be used to communicate with tx's server.
+userAgent: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/33.0.1750.152 Chrome/33.0.1750.152 Safari/537.36'
+
+# TODO: Ignore people's message
+ban:
+    - "110"
+    - "10000"
+
+# Message font config
+font:
+    colour: 'ff6600'
+    size:   10
+    name:   'Microsoft YaHei UI'
+
+# Login info for web server
+web:
+    auth:
+      'Admin': 'jjBot##ForYouxD'

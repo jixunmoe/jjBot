@@ -1,0 +1,28 @@
+<div class="row">
+	<div class="list-group col-xs-6 col-sm-4" id="groupChoose">
+		<a href="#" class="list-group-item" gid="{{info.gid}}" ng-repeat="(index, info) in gList">
+			{{info.name}} <span class="badge">{{info.gid}}</span>
+		</a>
+	</div>
+
+	<div class="col-xs-6 col-sm-8">
+		<div class="input-group">
+			<input type="text" class="form-control" id="msgInput" ng-keypress="keypress($event)"/>
+
+			<span class="input-group-btn">
+				<button class="btn btn-default" type="button" id="sendMsg">发送!</button>
+			</span>
+		</div>
+
+		<div class="clearfix"></div>
+
+		<div class="panel panel-default">
+			<div class="panel-heading">
+				<h3 class="panel-title">发送历史</h3>
+			</div>
+			<ul class="list-group list-unstyled" id="inputList">
+				
+			</ul>
+		</div>
+	</div>
+</div>

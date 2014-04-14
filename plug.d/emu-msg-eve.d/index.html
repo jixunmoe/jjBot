@@ -1,0 +1,35 @@
+<h3>模擬指令輸入</h3>
+<p>輸入一段指令, 模擬 <code>msg-cmd-xxx</code> 插件消息 (屬性不完整)</p>
+
+<form class="form-horizontal" ng-submit="sendmsg()">
+	<div class="form-group">
+		<label for="senderUIN" class="col-sm-2 control-label">發送者 UIN</label>
+		<div class="col-sm-10">
+			<input required type="text" class="form-control" ng-model="sender" id="senderUIN" placeholder="100000000">
+		</div>
+	</div>
+	<div class="form-group">
+		<label for="groupGid" class="col-sm-2 control-label">群組源 GID</label>
+		<div class="col-sm-10">
+			<input ng-required="isGroup" type="text" class="form-control" ng-model="groupGid" id="groupGid">
+		</div>
+	</div>
+	<div class="form-group">
+		<label for="sendMsg" class="col-sm-2 control-label">傳送的指令</label>
+		<div class="col-sm-10">
+			<input required class="form-control" id="sendMsg" rows="3" ng-model="content" placeholder="hello"></textarea>
+		</div>
+	</div>
+	<div class="form-group">
+		<div class="checkbox col-sm-offset-2 col-sm-10">
+			<label>
+				<input type="checkbox" ng-model="isGroup"> 群组?
+			</label>
+		</div>
+	</div>
+	<div class="form-group">
+		<div class="col-sm-offset-2 col-sm-10">
+			<input type="submit" class="btn btn-default" value="傳輸" />
+		</div>
+	</div>
+</form>

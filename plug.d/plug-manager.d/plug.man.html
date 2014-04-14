@@ -1,0 +1,79 @@
+<section ng-show="plugs.active && plugs.active.length">
+	<h3>已啓用插件</h3>
+	<table class="table table-hover">
+		<thead>
+			<th></th>
+			<th>编号</th>
+			<th>名称</th>
+			<th>版本</th>
+			<th>作者</th>
+			<th>简介</th>
+			<th>操作</th>
+		</thead>
+		<tr ng-repeat="plug in plugs.active" ng-click="clickRow($event)">
+			<td><input type="checkbox" class="plugList" plug="{{plug.file}}"></td>
+			<td>{{$index}}</td>
+			<td>{{plug.name}} ({{plug.file}})</td>
+			<td>{{plug.ver}}</td>
+			<td>{{plug.author}}</td>
+			<td>{{plug.desc}}</td>
+			<td>
+				<button class="btn btn-default btn-sm" ng-click="rlPlug(plug.file)">
+					<span class="glyphicon glyphicon-refresh"></span> 重载
+				</button>
+				<button class="btn btn-default btn-sm" ng-click="rmPlug(plug.file)">
+					<span class="glyphicon glyphicon-remove"></span> 移除
+				</button>
+			</td>
+		</tr>
+	</table>
+
+	<!-- 批量操作按钮 -->
+	<button class="btn btn-default" ng-click="rlPlugs()">
+		<span class="glyphicon glyphicon-refresh"></span> 批量重载
+	</button>
+	<button class="btn btn-default" ng-click="rmPlugs()">
+		<span class="glyphicon glyphicon-remove"></span> 批量移除
+	</button>
+</section>
+
+
+<section ng-show="plugs.disabled && plugs.disabled.length">
+	<h3>已禁用插件</h3>
+	<table class="table table-hover">
+		<thead>
+			<th></th>
+			<th>編號</th>
+			<th>文件名</th>
+			<th>操作</th>
+		</thead>
+
+		<tr ng-repeat="plug in plugs.disabled" ng-click="clickRow($event)">
+			<td><input type="checkbox" class="plug-enable" plug="{{plug}}"></td>
+			<td>{{$index}}</td>
+			<td>{{plug}}</td>
+			<td>
+				<button class="btn btn-default btn-sm" ng-click="rlPlug(plug)">
+					<span class="glyphicon glyphicon-plus"></span> 啓用
+				</button>
+			</td>
+		</tr>
+	</table>
+
+	<!-- 批量操作按钮 -->
+	<button class="btn btn-default" ng-click="enPlugs()">
+		<span class="glyphicon glyphicon-plus"></span> 批量加載
+	</button>
+</section>
+
+
+<style>
+table{
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	user-select: none;
+}
+table > tbody > tr{
+	cursor: pointer;
+}
+</style>

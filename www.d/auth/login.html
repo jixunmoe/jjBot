@@ -1,0 +1,28 @@
+<#
+$_G.boxMsg = '';
+if ($_POST.login && conf.web.auth[$_POST.login] == $_POST.passwd) {
+	// 是管理员 owo
+	loginAuth = '';
+	for (var i=0; i<2; i++) loginAuth += Math.random().toString().replace(/\./g, '');
+	setCookie ('auth', loginAuth);
+	$_G.boxMsg = '成功';
+} else {
+	$_G.boxMsg = '失败';
+}
+#><html ng-app="qc-auth">
+<head>
+	<meta charset="UTF-8" />
+	<title>jjBot - 用戶登陸</title>
+	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+	<link rel="stylesheet" href="/main.css">
+</head>
+
+<body>
+	<div class="container">
+		<h1>QBot 管理后台 - 登陆</h1>
+		<p>登陆<# echo ($_G.boxMsg); #>! 3 秒后跳至首页…</p>
+		<script>;setTimeout(function () {location.href="/"}, 3000);</script>
+	</div>
+</body>
+
+</html>

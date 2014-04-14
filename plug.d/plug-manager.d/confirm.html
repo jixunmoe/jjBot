@@ -1,0 +1,16 @@
+<div class="panel panel-default">
+	<div class="panel-heading">
+	<h3 class="panel-title">重載插件確認</h3>
+	</div>
+	<div class="panel-body">
+		<p>重置插件將加大服務器消耗, 因爲所屬插件將全部卸載然後重新安裝到內存。</p>
+		<p>如果程式設計人員未配置好，可能會造成內存泄露等問題。</p>
+		<p>如果內存使用率過高, 建議您關閉機器人然後重新啓動防止內存溢出。</p>
+		<p>如果頁面顯示錯誤，請先嘗試 <code>Ctrl + F5</code> (Mac: <code>&#8984; + F5</code>)。</p>
+		<p>堆使用開銷: <code>{{heapUsage}} MB</code> / <code>{{heapTotal}} MB</code>, 內存使用率: <code>{{memUsage}} MB</code></p>
+		<p class="alert alert-danger"><strong>警告: </strong>該操作將同時將<strong>所有</strong>禁用的模組掛載到內存，請謹慎操作。</p>
+	</div>
+	<div class="panel-footer text-right">
+		<button type="button" class="btn btn-primary" ng-click="doReloadAll()">确认</button>
+	</div>
+</div>
