@@ -1,7 +1,7 @@
 {
 	"name": "jjBot",
 	"description": "Just another Javascript Bot for webqq",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"keywords": ["jjBot"],
 	"maintainers": [{
 		"name": "Jixun.Moe",
@@ -10,7 +10,8 @@
 	}],
 	"dependencies": {
 		"sequence": ">=3.0.0",
-		"js-yaml":  ">=3.0.2"
+		"js-yaml":  ">=3.0.2",
+		"mysql2":  ">=0.11.7"
 	},
 	"repositories": [{
 			"type": "git",

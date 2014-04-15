@@ -8,6 +8,7 @@ $scope.clickRow = function (e) {
 	cb.prop ('checked', !cb[0].checked);
 };
 
+// ----------------------
 $scope.rmPlug = function (plugFile) {
 	$http.post('/plug.api?a=jx-man-plug', {
 		rm: true,
@@ -20,7 +21,7 @@ $scope.rmPlugs = function () {
 	$scope.rmPlug.apply(this, plugs);
 };
 
-// -------------
+// ----------------------
 $scope.rlPlug = function (plugFile) {
 	$http.post('/plug.api?a=jx-man-plug', {
 		files: arguments
@@ -39,7 +40,7 @@ $scope.enPlugs = function () {
 	$scope.rlPlug.apply(this, plugs);
 };
 
-// 
+// ----------------------
 $scope.toggleAll = function (classSelector) {
 	$(classSelector).each(function () {
 		this.checked = !this.checked;

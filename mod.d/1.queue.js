@@ -1,3 +1,6 @@
+/* jslint node:true */
+/* global debug */
+
 var mQueue = function (conf, mod) {
 	this.mod = mod;
 	this.queueList = {};
@@ -28,9 +31,13 @@ mQueue.prototype = {
 	},
 	done: function (name) {
 		if (debug.queue) this.mod.log.info ('Finished queue ->', name);
-		for (var i=0; i<this.queueList.length; i++)
-			this.queueList[i] ();
-
+		for (var a=1, args=[]; a<arguments.length; a++)
+			args.push(arguments[a]);
+		
+		if (debug.queue) this.mod.log.info ('Calling callbacks ->', name);
+		for (var i=0; i<this.queueList[name].length; i++)
+			this.queueList[name][i].apply(this, args);
+		
 		this.rm (name);
 	},
 	rm: function (name) {

@@ -26,5 +26,18 @@
 	<li>配置完后就可以执行 `node Boot.js` 执行机器人了~</li>
 </ul>
 
+<h1>更新历史/说明</h1>
+<ul>
+	<li>[!] 0.0.x -> 0.0.2: 请执行 `npm install` 或手动安装模组: `mysql2`。
+	<br>[!] 目前 UC 还不完善, 数据库可能随时更新其格式。
+	<br>[+] 新增 MySQL 数据库模组, 根据配置初始化. [`mod.d/1.db.js`]
+	<br>[+] 新增 用户中心插件, 依赖数据库模组. [`plug.d/07.uc.js`]
+	<br>[+] 新增 `bot.uinToNum` 方法; 将 uin 转换为唯一号码, 支持缓存 [未写完] [`mod.d/Bot.Core.js`]
+	<br>[*] 前台 插件管理员; 触发全部区域选项, `plug.d/plug-manager.d/controller.man.js`
+	<br>[*] 修正 `mod.queue.done` 方法; 完成后无法调用原回调 [`mod.d/1.queue.js`]
+	<br>[-] 其他小更改, 请参考 git diff。
+	</li>
+</ul>
+
 <h1>特别说明</h1>
 <p>因为尚处于开发阶段，所以难免可能有 Bug 什么的… 如果发现了的话请务必提交 Issue 吐槽, 谢谢 ^^</p>

@@ -1,3 +1,5 @@
+/*jslint node:true*/
+/*global console, __FLAG__, debug*/
 var http = require ('http'),
 	qs   = require ('querystring');
 
@@ -38,7 +40,7 @@ BotAPI.prototype = {
 			if (debug.api_data)
 				this.bot.log.info (query);
 
-		if (__FLAG__.offline) return cb ({ retcode: 998, msg: 'offline mode' });
+		if (__FLAG__.offline) return cb ({ retcode: 998, msg: 'offline mode', result: {account: '123456'} });
 
 		var that = this;
 		if ('function' == typeof query) {
@@ -69,7 +71,7 @@ BotAPI.prototype = {
 			if (debug.api_data)
 				this.bot.log.info (data);
 		
-		if (__FLAG__.offline) return cb ({ retcode: 998, msg: 'offline mode' });
+		if (__FLAG__.offline) return cb ({ retcode: 998, msg: 'offline mode', result: {account: '123456'} });
 		var postData = qs.stringify (data);
 		var that = this;
 

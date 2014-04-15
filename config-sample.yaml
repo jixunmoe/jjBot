@@ -38,3 +38,16 @@ font:
 web:
     auth:
       'Admin': 'jjBot##ForYouxD'
+
+# MySQL Info
+mysql:
+    auth:
+        host: localhost
+        port: 3306
+        user: root
+        password: root
+    database: jjBot
+    engine:   InnoDB
+default:
+    user:
+        dMoneyLeft: 50

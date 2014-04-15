@@ -129,6 +129,51 @@ CoreBot.prototype = {
 		//	this.getAllGroupInfo ();
 
 	},
+	/**
+	 * UIN/GID to QQNum
+	 */
+	uinToNum: function (uin, isGroup, cb, numTry) {
+		var that = this;
+		// Fix argument
+		uin = uin.toString();
+		numTry = numTry || 0;
+		
+		var gp = isGroup ? 'group' : 'friend';
+		var queueName = 'uinToNum-' + uin + '-' + gp;
+		
+		var cache = that.mod.cache.load('uinMap');
+		
+		// If cache exists, just return the cache.
+		if (!cache[gp]) {
+			cache[gp] = {};
+		} else if (cache[gp][uin]) {
+			cb(cache[gp][uin]);
+			return;
+		}
+		
+		// Now lock the queue.
+		if (that.mod.queue.reg (queueName, cb))
+			return;
+		
+		that.API.get ('/api/get_friend_uin2', {
+			tuin: uin,
+			verifysession: '',
+			type: isGroup ? 4 : 1, // 可能记错
+			code: '',
+			vfwebqq: that.auth.vfwebqq,
+			t: t()
+		}, function (data) {
+			if (__FLAG__.offline || data && data.result) {
+				that.mod.queue.done (queueName, cache[gp][uin] = data.result.account.toString());
+			} else {
+				that.log.error ('Fetch num error:', data, '(' + queueName + ')');
+				that.mod.queue.unlock (queueName);
+				
+				if (numTry < that.conf.maxRetry)
+					that.uinToNum (uin, isGroup, cb, numTry + 1);
+			}
+		});
+	},
 	getFriends: function (cb, numTry) {
 		var that = this;
 		numTry = numTry || 0;
@@ -152,7 +197,7 @@ CoreBot.prototype = {
 			} else {
 				that.friends = ret.result;
 				that.mod.cache.save ('friendInfo', that.friends);
-				that.mod.queue.done(queueName);
+				that.mod.queue.done(queueName, that.friends);
 			}
 		});
 	},
@@ -177,7 +222,7 @@ CoreBot.prototype = {
 				that.groupList = ret.result;
 				that.mod.cache.save('groupList', that.groupList);
 				that.getAllGroupInfo ();
-				that.mod.queue.done (queueName);
+				that.mod.queue.done (queueName, that.groupList);
 			}
 		});
 	},
@@ -224,7 +269,7 @@ CoreBot.prototype = {
 
 			that.groups[ret.result.ginfo.gid.toString()] = ret.result;
 			that.mod.cache.save ('groupInfo', that.groups);
-			that.mod.queue.done(queueName);
+			that.mod.queue.done(queueName, ret.result);
 		});
 	},
 	sendMsg: function (isGroup, targetId, content) {
@@ -317,9 +362,9 @@ CoreBot.prototype = {
 			return fooReloadGroup ();
 		}
 
-		if (bNoCardNick)
+		if (bNoCardNick) {
 			return cb (newUserData);
-
+		}
 		var userCardInfo = arrFilter (that.groups[gid].cards, function (cards) { return cards.muin == uin; }, {});
 		newUserData.profileName = newUserData.nick;
 		newUserData.nick = userCardInfo.card || newUserData.nick;
