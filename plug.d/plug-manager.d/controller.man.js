@@ -20,6 +20,7 @@ $scope.rmPlugs = function () {
 	$scope.rmPlug.apply(this, plugs);
 };
 
+// -------------
 $scope.rlPlug = function (plugFile) {
 	$http.post('/plug.api?a=jx-man-plug', {
 		files: arguments
@@ -36,6 +37,13 @@ $scope.enPlugs = function () {
 	var plugs = [];
 	$('input.plug-enable:checked').each(function () { plugs.push($(this).attr('plug')); });
 	$scope.rlPlug.apply(this, plugs);
+};
+
+// 
+$scope.toggleAll = function (classSelector) {
+	$(classSelector).each(function () {
+		this.checked = !this.checked;
+	});
 };
 
 $scope.reloadPlugList = function () {

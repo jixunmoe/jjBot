@@ -2,7 +2,7 @@
 	<h3>已啓用插件</h3>
 	<table class="table table-hover">
 		<thead>
-			<th></th>
+			<th><input type="checkbox" ng-click="toggleAll('input.plugList')" /></th>
 			<th>编号</th>
 			<th>名称</th>
 			<th>版本</th>
@@ -42,7 +42,7 @@
 	<h3>已禁用插件</h3>
 	<table class="table table-hover">
 		<thead>
-			<th></th>
+			<th><input type="checkbox" ng-click="toggleAll('input.plug-enable')" /></th>
 			<th>編號</th>
 			<th>文件名</th>
 			<th>操作</th>
