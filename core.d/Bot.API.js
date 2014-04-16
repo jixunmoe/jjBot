@@ -34,15 +34,17 @@ var BotAPI = function (Bot) {
 };
 
 BotAPI.prototype = {
-	get: function (path, query, cb) {
+	get: function (path, query, cb, numTry) {
+		var that = this;
+		numTry = numTry || 0;
+		
 		if (debug.api)
 			this.bot.log.info ('GET :', path);
-			if (debug.api_data)
-				this.bot.log.info (query);
+		if (debug.api_data)
+			this.bot.log.info (query);
 
 		if (__FLAG__.offline) return cb ({ retcode: 998, msg: 'offline mode', result: {account: '123456'} });
 
-		var that = this;
 		if ('function' == typeof query) {
 			cb = query;
 			query = '';
@@ -63,17 +65,22 @@ BotAPI.prototype = {
 			}
 		}, onDataCallback(cb)).on('error', function (e) {
 			that.bot.log.error (e);
+			if (numTry < that.bot.conf.maxRetry) {
+				if (debug.api)
+					this.bot.log.error ('Retry GET...');
+				that.get (path, query, cb, numTry + 1);
+			}
 		});
 	},
-	post: function (path, data, cb, host) {
+	post: function (path, data, cb, host, numTry) {
+		var that = this;
 		if (debug.api)
 			this.bot.log.info ('POST:', path);
-			if (debug.api_data)
-				this.bot.log.info (data);
+		if (debug.api_data)
+			this.bot.log.info (data);
 		
 		if (__FLAG__.offline) return cb ({ retcode: 998, msg: 'offline mode', result: {account: '123456'} });
 		var postData = qs.stringify (data);
-		var that = this;
 
 		
 		var req = http.request ({
@@ -90,6 +97,11 @@ BotAPI.prototype = {
 		}, onDataCallback(cb));
 		req.on('error', function (e) {
 			that.bot.log.error (e);
+			if (numTry < that.bot.conf.maxRetry) {
+				if (debug.api)
+					this.bot.log.error ('Retry POST...');
+				that.post (path, data, cb, host, numTry + 1);
+			}
 		});
 		req.write (postData);
 		req.end ();

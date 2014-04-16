@@ -34,10 +34,11 @@ mQueue.prototype = {
 		for (var a=1, args=[]; a<arguments.length; a++)
 			args.push(arguments[a]);
 		
-		if (debug.queue) this.mod.log.info ('Calling callbacks ->', name);
-		for (var i=0; i<this.queueList[name].length; i++)
-			this.queueList[name][i].apply(this, args);
-		
+		if (this.queueList[name]) {
+			if (debug.queue) this.mod.log.info ('Calling callbacks ->', name);
+			for (var i=0; i<this.queueList[name].length; i++)
+				this.queueList[name][i].apply(this, args);
+		}
 		this.rm (name);
 	},
 	rm: function (name) {

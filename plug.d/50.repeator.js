@@ -8,9 +8,9 @@ var pluginRepeator = function (Bot, regEvent) {
 
 pluginRepeator.prototype = {
 	name  : '復讀姬',
-	ver   : '1.0',
+	ver   : '1.0.1',
 	author: 'Jixun',
-	desc  : '复读 10s 内出现 3 次的内容。',
+	desc  : '复读 10s 内出现 3 次的内容 [几率为 60%]。',
 	load: function () {
 		var that = this;
 		
@@ -19,7 +19,7 @@ pluginRepeator.prototype = {
 			var repCount = that.repeatCache[strMsg];
 			if (repCount) {
 				repCount = ++that.repeatCache[strMsg];
-				if (repCount == 3 && Math.random () > 0.7)
+				if (repCount == 3 && Math.random () > 0.4)
 					reply (strMsg + ' [復讀]');
 			} else {
 				that.repeatCache[strMsg] = 1;

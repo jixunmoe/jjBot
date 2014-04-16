@@ -32,55 +32,62 @@ pluginSign.prototype = {
 	desc  : '用户签到以及其他功能。',
 	newUser: function (qqNum, cb) {
 		var that = this;
-		console.log ('insert ignore into `jB_user` (`qNum`, `dMoneyLeft`) values (?, ?)', qqNum, that.bot.conf.default.user.dMoneyLeft);
 		
-		console.log (that.db.query('insert ignore into `jB_user` (`qNum`, `dMoneyLeft`) values (?, ?)', 
-									[qqNum, that.bot.conf.default.user.dMoneyLeft]));
+		that.db.query('insert ignore into `jB_user` (`qNum`, `dMoneyLeft`) values (?, ?)', 
+							[qqNum, that.bot.conf.user.default.dMoneyLeft]);
 		
 		cb (joinObj({
 			qNum: qqNum,
 			newUser: true
-		}, this.bot.conf.default.user));
+		}, this.bot.conf.user.default));
 	},
 	getUser: function (uin, cb) {
 		if (!cb) return null; // Invalid request.
 		
 		var that = this;
-		that.bot.uinToNum(uin, false, function (userNum) {
-			that.db.query ('select * from `jB_user` where `qNum`=? limit 1', userNum, function (err, data) {
-				if (err) {
-					console.log (err);
-					return;
-				}
-				
-				// User not exist, create an account.
-				if (!data.length) {
-					that.newUser (userNum, cb);
-					return;
-				}
-				
-				// User exists, callback to it.
-				cb (data[0]);
-			});
+		that.bot.uinToNum(uin, false, function (userNum) { that.getUserByNum (userNum, cb); });
+	},
+	getUserByNum: function (userNum, cb) {
+		var that = this;
+		
+		that.db.query ('select * from `jB_user` where `qNum`=? limit 1', userNum, function (err, data) {
+			// There's an error!
+			if (err) return;
+
+			// User not exist, create an account.
+			if (!data.length) {
+				that.newUser (userNum, cb);
+				return;
+			}
+
+			// User exists, callback to it.
+			cb (data[0]);
 		});
 	},
 	load: function () {
 		var that = this;
 		that.regEvent ('msg-cmd-sign', function (reply, msg, cmdObj) {
-			console.log ('msg-cmd-sign');
 			that.getUser (msg.from_uin, function (user) {
-				var signStr = '';
-				if (user.newUser || (function (timeNow, lastTimeSign) {
+				var signStr = '[' + msg.user.nick + '] ';
+				if (user.newUser || (function (timeNow, timeLastSign) {
 					// 86400000 = 24 * 60 * 60 * 1000
 					// If user already sign in within 24 hours, 
 					// ... and date is same
-					return timeNow - lastTimeSign > 86400000 || lastTimeSign.getDate() != timeNow.getDate();
+					return timeNow - timeLastSign > 86400000 || timeLastSign.getDate() != timeNow.getDate();
 				})(new Date(), new Date(user.tLastSign))) {
-					// TODO: SIGN
+					var signMoney = Math.floor(that.bot.conf.user.signRange.min + Math.random() * 
+						(that.bot.conf.user.signRange.max - that.bot.conf.user.signRange.min));
 					
+					that.db.query ('update `jB_user` SET `tLastSign`=now(), dMoneyLeft=dMoneyLeft+? WHERE `qNum` = ?;',
+									[signMoney, user.qNum]);
+					
+					signStr += that.ext._ ('签到成功! 获得 %s %s', signMoney, that.bot.conf.user.currency);
 				} else {
 					// TODO: Signed in within a day.
+					signStr += that.ext._ ('签到失败: 您已经在 %s 签到过了', user.tLastSign);
 				}
+				
+				reply (signStr);
 			});
 		});
 	},

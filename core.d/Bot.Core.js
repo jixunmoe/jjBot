@@ -385,6 +385,8 @@ CoreBot.prototype = {
 			this.log.msg(userData.nick, ': ->', msg.strMsg);
 		}
 
+		msg.user = userData;
+		
 		this.Plugin.on('msg', msg.strMsg, msg, this.createCallback(
 			this, this.sendMsg, msg.isGroup, msg.from_gid || msg.from_uin)
 		);

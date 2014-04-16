@@ -88,8 +88,12 @@ function modWeb (conf, mod) {
 			res.write (a.toString());
 		};
 		
+		var isExec = url.slice(-8) == '.node.js';
+		
 		switch (urlExt) {
 			case 'js': case 'css': case 'ico':
+				if (isExec) break;
+				
 				// Cache for a year.
 				console.log ('Cacheble file:', url);
 				res.setHeader('Cache-Control', 'public, max-age=31556926');
@@ -172,7 +176,7 @@ function modWeb (conf, mod) {
 		}
 		
 		// We're Node :)
-		if (url.slice(-8) == '.node.js') {
+		if (isExec) {
 			try {
 				/* jshint ignore:start */
 				eval(fs.readFileSync (conf.webPath + url).toString());

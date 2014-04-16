@@ -133,11 +133,11 @@ jjBotController.controller('jjBot-func-code', ['$scope', '$routeParams', '$http'
 		$scope.submit = function () {
 			if ($scope.submitting) return;
 			$scope.submitting = true;
-			$.post('/api.node.js?action=code', {
+			$http.post('/api.node.js?action=code', {
 				code: $('#codeInp').val()
-			}, function (r) {
+			}).success(function (r) {
 				$scope.submitting = false;
-				$scope.submitSuccess = !JSON.parse (r).error;
+				$scope.submitSuccess = !r.error;
 				$('#msg-code-submit').modal('show');
 			});
 		};
