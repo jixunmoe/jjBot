@@ -99,6 +99,8 @@ CoreBot.prototype = {
 		}, 'd.web2.qq.com');
 	},
 	loginDone: function () {
+		console.log ('loginDone, Begin poll.');
+		
 		if (__FLAG__.offline) {
 			this.mod.log.warn ('Offline mode, using data from CACHE!');
 			this.friends = this.mod.cache.load ('friendInfo');

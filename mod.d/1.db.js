@@ -17,7 +17,8 @@ var modDB = function (conf, mod) {
 	var authData = conf.mysql.auth;
 	authData.multipleStatements = true;
 	this.db   = mysql.createConnection (authData);
-	this.db.query (_('create database if not exists `%s`; use `%s`;', conf.mysql.database, conf.mysql.database));
+	this.db.query (_('create database if not exists `%s` DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci; use `%s`;',
+						conf.mysql.database, conf.mysql.database));
 };
 
 module.exports = function (conf, mod) {

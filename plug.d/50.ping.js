@@ -6,14 +6,14 @@ var pluginHello = function (Bot, regEvent) {
 };
 
 pluginHello.prototype = {
-	name  : 'Hello World!',
+	name  : 'Ping!',
 	ver   : '1.0',
 	author: 'Jixun',
-	desc  : '回应指令 Hello, 演示用插件',
+	desc  : '回应指令 Ping, 演示用插件',
 	load: function () {
 		// 安裝 Hook
-		this.regEvent ('msg-cmd-hello', function (reply) {
-			reply ('Hello from Jixun~');
+		this.regEvent ('msg-cmd-ping', function (reply) {
+			reply ('Pong!');
 		});
 	},
 	unload: function () {

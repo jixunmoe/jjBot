@@ -67,8 +67,8 @@ pluginParseCommand.prototype = {
 			// It's a command!
 			// Boardcast to inform all other plugins.
 			
-			// Command name
-			that.bot.Plugin.on.apply(that.bot.Plugin, [cmdObj.shift ()].concat([reply, msg]).concat(cmdObj));
+			// Plugin(Command name, reply, msg, args, arg1, arg2, ...)
+			that.bot.Plugin.on.apply(that.bot.Plugin, [cmdObj.shift ()].concat([reply, msg, cmdObj]).concat(cmdObj));
 			return true;
 		});
 	},
