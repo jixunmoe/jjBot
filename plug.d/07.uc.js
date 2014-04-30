@@ -66,10 +66,17 @@ pluginSign.prototype = {
 	},
 	load: function () {
 		var that = this;
-		that.regEvent ('msg-cmd-sign', function (reply, msg, cmdObj) {
+		that.regEvent ('msg-cmd-sign', function (reply, msg, cmdObj, action) {
 			that.getUser (msg.from_uin, function (user) {
 				var signStr = '[' + (user.userNick || msg.user.nick) + '] ';
-				if (user.newUser || (function (timeNow, timeLastSign) {
+				
+				if (action && action == 'info') {
+					if (user.newUser || !user.tLastSign) {
+						signStr += '您尚未签到。';
+					} else {
+						signStr += '上次签到日期: ' + new Date(user.tLastSign);
+					}
+				} else if (user.newUser || (function (timeNow, timeLastSign) {
 					// 86400000 = 24 * 60 * 60 * 1000
 					// If user already sign in within 24 hours, 
 					// ... and date is same
@@ -83,8 +90,12 @@ pluginSign.prototype = {
 					
 					signStr += that.ext._ ('签到成功! 获得 %s %s', signMoney, that.bot.conf.user.currency);
 				} else {
-					// TODO: Signed in within a day.
-					signStr += that.ext._ ('签到失败: 您已经在 %s 签到过了', user.tLastSign);
+					var tmpMoney = Math.ceil(Math.random() * 5); // 0~5
+				
+					that.db.query ('update `jB_user` SET `tLastSign`=now(), dMoneyLeft=dMoneyLeft-? WHERE `qNum` = ?;',
+									[tmpMoney, user.qNum]);
+					
+					signStr += that.ext._ ('签到失败: 您已经在 %s 签到过了。作为惩罚，扣除 %s %s。', user.tLastSign, tmpMoney, that.bot.conf.user.currency);
 				}
 				
 				reply (signStr);
@@ -108,7 +119,7 @@ pluginSign.prototype = {
 				}
 			});
 		});
-		that.regEvent ('msg-cmd-moneytop', function (reply, msg, nicks) {
+		that.regEvent ('msg-cmd-top', function (reply, msg, nicks) {
 			that.db.query ('select `dMoneyLeft`,`userNick` from `jB_user` order by dMoneyLeft desc limit 5', function (err, data) {
 				for (var i=0, rankNum = 1, rd = [that.bot.conf.user.currency + '排行如下:'], lastMoney = 0; i<data.length; i++) {
 					if (data[i].dMoneyLeft != lastMoney)
@@ -116,7 +127,7 @@ pluginSign.prototype = {
 					
 					lastMoney = data[i].dMoneyLeft;
 					rd.push(
-						that.ext._ ('第 %s 位, 拥有 %s %s: %s', 
+						that.ext._ ('第 %s 位, %s %s: %s', 
 							rankNum, data[i].dMoneyLeft, that.bot.conf.user.currency,
 							data[i].userNick || '<未知>'
 						)
@@ -127,7 +138,9 @@ pluginSign.prototype = {
 		});
 		/*
 		that.regEvent ('msg-cmd-', function (reply, msg, cmdObj) {
-
+			that.getUser (msg.from_uin, function (user) {
+				// TODO: Code here
+			});
 		});
 		*/
 	},

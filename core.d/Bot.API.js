@@ -54,7 +54,7 @@ BotAPI.prototype = {
 
 		if (query) path += '?' + query;
 
-		http.get ({
+		return http.get ({
 			host: apiHost,
 			path: path,
 			mathod: 'GET',
@@ -82,7 +82,6 @@ BotAPI.prototype = {
 		if (__FLAG__.offline) return cb ({ retcode: 998, msg: 'offline mode', result: {account: '123456'} });
 		var postData = qs.stringify (data);
 
-		
 		var req = http.request ({
 			host: host || apiHost,
 			path: path,
@@ -105,6 +104,7 @@ BotAPI.prototype = {
 		});
 		req.write (postData);
 		req.end ();
+		return req;
 	}
 };
 

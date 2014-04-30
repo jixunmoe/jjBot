@@ -78,12 +78,15 @@ CoreBot.prototype = {
 			foo.apply (that, newArgs);
 		};
 	},
+	pollTimeThd: 0,
 	doPollLoop: function () {
 		if (__FLAG__.offline)
 			return;
 
 		var that = this;
 
+		clearTimeout (that.pollTimeThd);
+		
 		that.API.post ('/channel/poll2', {
 			clientid: that.auth.clientid,
 			psessionid: that.auth.psessionid,
@@ -95,11 +98,22 @@ CoreBot.prototype = {
 			})
 		}, function (data) {
 			that.parsePoll (data);
-			setTimeout(function () { that.doPollLoop.apply (that); }, 400);
-		}, 'd.web2.qq.com');
+			clearTimeout (that.pollTimeThd);
+			that.pollTimeThd = setTimeout(function () { that.doPollLoop.apply (that); }, 400);
+		}, 'd.web2.qq.com').on('socket', function (s) {
+			// 2mins timeout
+			s.setTimeout(120000, function () {
+				that.mod.log.warn ('[POLL] Socket timeout');
+				// Timeout
+				clearTimeout (that.pollTimeThd);
+				
+				// Create new thread.
+				that.pollTimeThd = setTimeout(function () { that.doPollLoop.apply (that); }, 400);
+			});
+		});
 	},
 	loginDone: function () {
-		console.log ('loginDone, Begin poll.');
+		this.mod.log.info ('loginDone, Begin poll.');
 		
 		if (__FLAG__.offline) {
 			this.mod.log.warn ('Offline mode, using data from CACHE!');
