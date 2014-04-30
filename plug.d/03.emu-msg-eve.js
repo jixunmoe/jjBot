@@ -38,7 +38,10 @@ pluginReloadAll.prototype = {
 			that.bot.Plugin.on('msg', that.cmd + $_POST.cmd, {
 				isGroup: $_POST.isGroup,
 				from_uin: $_POST.uin,
-				from_gid: $_POST.gid
+				from_gid: $_POST.gid,
+				user: {
+					nick: 'CONSOLE'
+				}
 			}, function (content) {
 				console.log (content);
 				that.bot.sendMsg ($_POST.isGroup, $_POST.isGroup ? $_POST.gid : $_POST.uin, content);

@@ -291,6 +291,11 @@ CoreBot.prototype = {
 	sendMsg: function (isGroup, targetId, content) {
 		var that = this;
 
+		if (!targetId) {
+			that.mod.log.msg ('[CONSOLE] Send:', content);
+			return ;
+		}
+		
 		var msgFont = that.conf.font;
 		msgFont.style = msgFont.style || [0, 0, 0];
 
