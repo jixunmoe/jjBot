@@ -82,8 +82,7 @@ BotPlugin.prototype = {
 		});
 
 		if (thisPlug.load) {
-			thisPlug.load();
-			// thisPlug.load.apply(thisPlug);
+			thisPlug.load ();
 		}
 
 		this.log.info ('Plugin ', sPlugFile, ':', thisPlug.name, thisPlug.ver);

@@ -24,6 +24,7 @@
 * 进入解压后的目录, 输入 `npm install` 安装依赖项
 * 将 `config-sample.yaml` 拷贝一份到 `config.yaml`, 按照注释填写即可。
 * 配置完后就可以执行 `node Boot.js` 执行机器人了~
+* **注意**: 如果您不需要用户管理系统 (MySQL 数据库)，可以删除 `mod.d/1.db.js` 以及 `plug.d/07.uc.js` 档案。MySQL 用户需要创建数据库、表格的权限，或已经配置完毕数据库。
 
 ## 更新历史/说明
 * [!] 0.0.x -> 0.0.2: 请执行 `npm install` 或手动安装模组: `mysql2`。
