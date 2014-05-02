@@ -2,6 +2,7 @@
 
 var pluginUserCenter = function (Bot, regEvent) {
 	this.bot = Bot;
+	this.mod = Bot.mod;
 	this.regEvent = regEvent;
 	this.ext = Bot.mod.db;
 	this.db = this.ext.db;
@@ -27,16 +28,14 @@ function joinObj (def) {
 }
 
 function can (user, node, def) {
-	if (!user.pems)
-		return def;
+	// Not a valid user object.
+	if (!user || !user.pems) return def;
 	
-	return user.pems.can && user.pems.can.indexOf (node) != -1 ?
-		// If the node is in 'can' list, then allow.
-		true
-		: // Else check if is in the black list,
-			user.pems.no && user.pems.no.indexOf (node) != -1 ?
-			false
-			// Neither list of permissions, then return the default permission.
+	// First, check if is banned to use the command.
+	return  user.pems.no && user.pems.no.indexOf (node) != -1 ? false
+		// Then check if is in the allowed list.
+		: user.pems.can && user.pems.can.indexOf (node) != -1 ? true
+			// If not found, then return default permission.
 			: def;
 }
 
@@ -54,7 +53,7 @@ pluginUserCenter.prototype = {
 		cb (joinObj({
 			qNum: qqNum,
 			newUser: true,
-			pems: {}
+			pems: {can: [], no: []}
 		}, this.bot.conf.user.default));
 	},
 	getUser: function (uin, cb) {
@@ -91,7 +90,7 @@ pluginUserCenter.prototype = {
 			var ret = data[0];
 			
 			// Parse permission config
-			if (ret.pems && ret.pems.length) {
+			if (ret.pems) {
 				ret.pems = JSON.parse(ret.pems);
 				
 				if (!ret.pems.can)
@@ -99,6 +98,8 @@ pluginUserCenter.prototype = {
 				
 				if (!ret.pems.no)
 					ret.pems.no = [];
+			} else {
+				ret.pems = {can: [], no: []};
 			}
 			
 			// User exists, callback to it.
@@ -115,6 +116,7 @@ pluginUserCenter.prototype = {
 		that.regEvent ('msg-cmd-sign', function (reply, msg, cmdObj, action) {
 			that.getUser (msg.from_uin, function (user) {
 				if (!can(user, 'talk', true)) return ;
+				if (!can(user, 'sign', true)) return ;
 				
 				var signStr = '[' + (user.userNick || msg.user.nick) + '] ';
 				
@@ -137,6 +139,7 @@ pluginUserCenter.prototype = {
 					var signMoney = Math.floor(that.bot.conf.user.signRange.min + Math.random() * 
 						(that.bot.conf.user.signRange.max - that.bot.conf.user.signRange.min));
 					
+					user.tLastSign = new Date();
 					that.db.query ('update `jB_user` SET `tLastSign`=now(), dMoneyLeft=dMoneyLeft+? WHERE `qNum` = ?;',
 									[signMoney, user.qNum]);
 					
@@ -156,16 +159,18 @@ pluginUserCenter.prototype = {
 		that.regEvent ('msg-cmd-money', function (reply, msg, cmdObj) {
 			that.getUser (msg.from_uin, function (user) {
 				if (!can(user, 'talk', true)) return ;
+				if (!can(user, 'money', true)) return ;
 				reply ('[' + (user.userNick || msg.user.nick) + '] 的余额为: ' + user.dMoneyLeft + that.bot.conf.user.currency);
 			});
 		});
 		that.regEvent ('msg-cmd-nick', function (reply, msg, args) {
 			that.getUser (msg.from_uin, function (user) {
 				if (!can(user, 'talk', true)) return ;
-				if (args.length) {
+				
+				if (args.length && can(user, 'set-nick', true)) {
 					var nickName = args.join(' ').replace(/\s+/g, ' ');
 					
-					if (!can(user, 'name-op', false) && /官方|管理|admin|权限/i.test(nickName)) {
+					if (!can(user, 'set-nick-op', false) && /官方|管理|admin|权限/i.test(nickName)) {
 						reply ('[' + msg.user.nick + '] 昵称更新失败: 请勿做死。');
 						return ;
 					}
@@ -181,6 +186,7 @@ pluginUserCenter.prototype = {
 		that.regEvent ('msg-cmd-top', function (reply, msg, nicks) {
 			that.getUser (msg.from_uin, function (user) {
 				if (!can(user, 'talk', true)) return ;
+				if (!can(user, 'money-top', true)) return ;
 				
 				that.db.query ('select `dMoneyLeft`,`userNick` from `jB_user` order by dMoneyLeft desc limit 5', function (err, data) {
 					for (var i=0, rankNum = 1, rd = [that.bot.conf.user.currency + '排行如下:'], lastMoney = 0; i<data.length; i++) {
@@ -197,6 +203,97 @@ pluginUserCenter.prototype = {
 					}
 					reply (rd.join('\n'));
 				});
+			});
+		});
+		
+		var _unique = function (arr) {
+			var n = [];
+			
+			for (var i=0; i<arr.length; i++)
+				if (n.indexOf(arr[i]) == -1)
+					n.push (arr[i]);
+			
+			return n;
+		};
+		
+		var _union = function (arr) {
+			var n = arr.slice();
+			for (var i=1; i<arguments.length; i++) {
+				n = n.concat (arguments[i]);
+			}
+			
+			return _unique (n);
+		};
+		
+		var _arrRm = function (arr, arrRm) {
+			var n = [];
+			for (var i=0; i<arr.length; i++)
+				if (arrRm.indexOf(arr[i]) == -1)
+					n.push (arr[i]);
+			
+			return _unique (n);
+		};
+		
+		var _setPem = function (qnum, newPem) {
+			that.db.query ('update `jB_user` SET `pems`=? WHERE `qNum` = ?;', [JSON.stringify (newPem), qnum]);
+		};
+		
+		var _pem = function (reply, action, pemList, target) {
+			var pem = target.pems;
+			
+			if (action == 'list') {
+				reply (that.ext._('[%s] 拥有的权限有: %s\n明令禁止的权限为: %s', target.userNick, pem.can.join('、'), pem.no.join('、')));
+				return;
+			}
+			
+			if (!pemList.length || !pem) return;
+			
+			switch (action) {
+				case 'add':
+					pem.can = _union(pem.can, pemList);
+					_setPem (target.qNum, pem);
+					reply (that.ext._('%s 的权限添加成功!', target.userNick));
+					break;
+					
+				case 'rm':
+					pem.can = _arrRm (pem.can, pemList);
+					_setPem (target.qNum, pem);
+					reply (that.ext._('%s 的权限移除完毕成功!', target.userNick));
+					break;
+					
+				case 'ban':
+					pem.no = _union (pem.no, pemList);
+					_setPem (target.qNum, pem);
+					reply (that.ext._('%s 的权限封禁成功!', target.userNick));
+					break;
+					
+				case 'unban':
+					pem.no = _arrRm (pem.no, pemList);
+					_setPem (target.qNum, pem);
+					reply (that.ext._('%s 的权限解除成功!', target.userNick));
+					break;
+			}
+		};
+		
+		that.regEvent ('msg-cmd-pem', function (reply, msg, args, action, qnum) {
+			if (!action) return ;
+			
+			// Pem list.
+			var pemList = args.slice(1);
+			
+			that.getUser (msg.from_uin, function (user) {
+				if (!can(user, 'talk', true)) return ;
+				if (!can(user, 'pem', false)) return ;
+				if (!can(user, 'pem-*', false) && !can(user, 'pem-'+action, false)) return ;
+				
+				if (qnum && /^\d+$/.test(qnum)) {
+					pemList.shift ();
+					that.getUserByNum (qnum, function (c) {
+						_pem (reply, action, pemList, c);
+					});
+				} else {
+					_pem (reply, action, pemList, user);
+				}
 			});
 		});
 		/*
