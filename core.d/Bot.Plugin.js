@@ -23,6 +23,12 @@ function joinObj (def) {
 }
 
 BotPlugin.prototype = {
+	thatCallback: function (that, foo) {
+		// Simple callback to fix 'this' issue.
+		return function () {
+			foo.apply (that, arguments);
+		};
+	},
 	/**
 	 * Init the BotPlugin System.
 	 * @param  {Boolean} bForceReload Optional, if set to true is reload every plugin.
@@ -45,24 +51,23 @@ BotPlugin.prototype = {
 		if (fs.lstatSync(plugPath).isDirectory())
 			// Is a directory, not a valid plugin.
 			return;
-
-		this.log.info ('Loading plugin ', sPlugFile, '...');
-
+		
 		var that = this;
+		that.log.info ('Loading plugin ', sPlugFile, '...');
 
 		if (bForceReload)
-			this.unloadPlugin (sPlugFile, plugPath);
+			that.unloadPlugin (sPlugFile, plugPath);
 
 		var plugInfo = {
 			module: sPlugFile,
 			events: {}
 		};
-		this.plugins[sPlugFile] = plugInfo;
+		that.plugins[sPlugFile] = plugInfo;
 
 		var newPlugin = require (plugPath);
-		var thisPlug = new newPlugin (this.bot, function (eventName, cb) {
-			// regEvent from sPlugFile.
-			var eveIndex = that.reg (eventName, cb);
+		var thisPlug = new newPlugin (that.bot, function (eventName, cb) {
+			// regEvent from sPlugFile, ensure 'this' is in correct context.
+			var eveIndex = that.reg (eventName, that.thatCallback(thisPlug, cb));
 
 			if (eveIndex === null)
 				return null;
@@ -85,7 +90,7 @@ BotPlugin.prototype = {
 			thisPlug.load ();
 		}
 
-		this.log.info ('Plugin ', sPlugFile, ':', thisPlug.name, thisPlug.ver);
+		that.log.info ('Plugin ', sPlugFile, ':', thisPlug.name, thisPlug.ver);
 	},
 	/**
 	 * Unloads specific plugin by given name.

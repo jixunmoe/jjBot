@@ -97,6 +97,11 @@ pluginUserCenter.prototype = {
 	},
 	load: function () {
 		var that = this;
+		
+		// Extenal functions.
+		that.regEvent ('uc-get-user', that.getUser);
+		that.regEvent ('uc-get-userByNum', that.getUserByNum);
+		
 		that.regEvent ('msg-cmd-sign', function (reply, msg, cmdObj, action) {
 			that.getUser (msg.from_uin, function (user) {
 				if (!can(user, 'talk', true)) return ;
