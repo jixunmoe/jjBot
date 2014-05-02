@@ -68,13 +68,23 @@ pluginUserCenter.prototype = {
 		
 		var that = this;
 		
+		var queueName = 'uc-get-user-' + userNum;
+		
+		// Register queue.
+		if (that.mod.queue.reg (queueName, cb)) return;
+		
 		that.db.query ('select * from `jB_user` where `qNum`=? limit 1', userNum, function (err, data) {
 			// There's an error!
-			if (err) return;
+			if (err) {
+				that.bot.mod.queue.unlock (queueName);
+				return;
+			}
 
 			// User not exist, create an account.
 			if (!data.length) {
-				that.newUser (userNum, cb);
+				that.newUser (userNum, function (r) {
+					that.bot.mod.queue.done (queueName, r);
+				});
 				return;
 			}
 
@@ -92,7 +102,7 @@ pluginUserCenter.prototype = {
 			}
 			
 			// User exists, callback to it.
-			cb (ret);
+			that.bot.mod.queue.done (queueName, ret);
 		});
 	},
 	load: function () {
