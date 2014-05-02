@@ -26,7 +26,7 @@ BotPlugin.prototype = {
 	thatCallback: function (that, foo) {
 		// Simple callback to fix 'this' issue.
 		return function () {
-			foo.apply (that, arguments);
+			return foo.apply (that, arguments);
 		};
 	},
 	/**
@@ -146,7 +146,7 @@ BotPlugin.prototype = {
 		if ('function' != typeof cb) return null;
 
 		if (debug.event)
-			this.log.info ('Register event ->', type, cb.toString());
+			this.log.info ('Register event ->', type);
 
 		// Check if the listener is ready to push.
 		if (!this.listener[type])
@@ -215,6 +215,9 @@ BotPlugin.prototype = {
 		for (var z=2, args=[]; z<arguments.length; z++)
 			args.push (arguments[z]);
 
+		if (debug.event)
+			this.log.info ('Call event[Sync] ->', type, '\nWith arguments:', args);
+
 		var ret = bSingle ? null : [], retData;
 		if (this.listener[type]) {
 			for (var i=0; i<this.listener[type].length; i++) {
@@ -227,6 +230,7 @@ BotPlugin.prototype = {
 				ret.push(this.listener[type][i].apply(this, args));
 			}
 		}
+		
 		return ret;
 	}
 };
