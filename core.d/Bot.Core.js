@@ -355,61 +355,74 @@ CoreBot.prototype = {
 		
 		cb (arrFilter(that.friends.info, function (u) { return uin === u.uin; }, {}));
 	},
+	// TODO: Fix crash when some one joined.
 	getUserFromGroup: function (uin, gid, bNoCardNick, cb, numTry) {
 		var that = this, args = arguments;
 		numTry = args[4] = numTry ? numTry + 1 : 1;
 
+		// 检查是否存在列表
 		if (!this.groupList.gnamelist)
-			// Not ready yet.
 			return;
 
 		if (debug.CORE)
 			that.mod.log.info ('getUserFromGroup:', uin);
 		
+		// 转换到文本
 		gid = gid.toString ();
-		var fooReloadGroup = function () {
-			if (numTry > that.conf.maxRetry) {
-				that.log.error ('Max Retry for get user;', args);
-				return;
-			}
-
-			var gCode = arrFilter(that.groupList.gnamelist, function (l) {
-				return l.gid.toString() === gid;
-			});
-
-			if (!gCode) {
-				that.log.error ('getUserFromGroup: 请求更新群组数据但是找不到 gcode');
-				return;
-			}
-
-			that.getGroupInfo(gCode.code, false, function () {
-				// 更新数据了, 重试
-				that.getUserFromGroup.apply (that, args);
-			});
-		};
-
+		
+		// 检查群组列表是否存在该群组
 		if (!that.groups[gid]) {
 			if (debug.group)
 				that.mod.log.warn ('GID:', gid, ' not exist, reload Group List.');
 			return that.getGroupList ();
 		}
 
+		// 选择用户数据
 		var newUserData = arrFilter (that.groups[gid].minfo, function (minfo) { return minfo.uin == uin; });
 
-		// 新用户入群, 还没有数据
 		if (!newUserData) {
+			// 新用户入群, 还没有数据; 请求重载
 			if (debug.group) that.mod.log.warn ('GID:', gid, ' User info not found, fooReloadGroup');
-			process.nextTick (fooReloadGroup);
+			
+			// 重试次数过多
+			if (numTry > that.conf.maxRetry) {
+				that.log.error ('Max Retry for get user;', args);
+				return;
+			}
+			
+			// 抓取群组 gCode
+			var gCode = arrFilter(that.groupList.gnamelist, function (l) {
+				return l.gid.toString() === gid;
+			});
+			
+			// 抓不到 gCode - 报错
+			if (!gCode) {
+				that.log.error ('getUserFromGroup: 请求更新群组数据但是找不到 gcode');
+				return;
+			}
+
+			// 请求强制更新群组数据。
+			that.getGroupInfo(gCode.code, true, function () {
+				// 更新数据了, 重试
+				that.getUserFromGroup.apply (that, args);
+			});
 			return;
 		}
 
+		// 如果不要求获取用户群名片，可以跳过获取名片过程。
 		if (bNoCardNick) {
-			return cb (newUserData);
+			process.nextTick (function () {
+				cb (newUserData);
+			});
+			return ;
 		}
 		var userCardInfo = arrFilter (that.groups[gid].cards, function (cards) { return cards.muin == uin; }, {});
 		newUserData.profileName = newUserData.nick;
 		newUserData.nick = userCardInfo.card || newUserData.nick;
-		cb (newUserData);
+		
+		process.nextTick (function () {
+			cb (newUserData);
+		});
 	},
 	fooProcMsg: function (msg, userData) {
 		// On User get
