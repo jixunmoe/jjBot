@@ -357,7 +357,7 @@ CoreBot.prototype = {
 	},
 	getUserFromGroup: function (uin, gid, bNoCardNick, cb, numTry) {
 		var that = this, args = arguments;
-		args[4] = numTry ? numTry +1 : 1;
+		numTry = args[4] = numTry ? numTry + 1 : 1;
 
 		if (!this.groupList.gnamelist)
 			// Not ready yet.
@@ -399,7 +399,8 @@ CoreBot.prototype = {
 		// 新用户入群, 还没有数据
 		if (!newUserData) {
 			if (debug.group) that.mod.log.warn ('GID:', gid, ' User info not found, fooReloadGroup');
-			return fooReloadGroup ();
+			process.nextTick (fooReloadGroup);
+			return;
 		}
 
 		if (bNoCardNick) {
