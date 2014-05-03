@@ -24,7 +24,10 @@ function onDataCallback (cb, preSetup) {
 			} catch (e) {
 				console.error (e, body);
 			}
-			cb (obj, body, r);
+			
+			process.nextTick (function () {
+				cb (obj, body, r);
+			});
 		});
 	};
 }
@@ -66,9 +69,11 @@ BotAPI.prototype = {
 		}, onDataCallback(cb)).on('error', function (e) {
 			that.bot.log.error (e);
 			if (numTry < that.bot.conf.maxRetry) {
-				if (debug.api)
-					this.bot.log.error ('Retry GET...');
-				that.get (path, query, cb, numTry + 1);
+				this.bot.log.error ('GET Failed, retry ...', numTry);
+				
+				process.nextTick (function () {
+					that.get (path, query, cb, numTry + 1);
+				});
 			}
 		});
 	},
@@ -97,9 +102,11 @@ BotAPI.prototype = {
 		req.on('error', function (e) {
 			that.bot.log.error (e);
 			if (numTry < that.bot.conf.maxRetry) {
-				if (debug.api)
-					this.bot.log.error ('Retry POST...');
-				that.post (path, data, cb, host, numTry + 1);
+				this.bot.log.error ('POST Failed, retry ...', numTry);
+				
+				process.nextTick (function () {
+					that.post (path, data, cb, host, numTry + 1);
+				});
 			}
 		});
 		req.write (postData);

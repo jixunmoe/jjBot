@@ -188,7 +188,8 @@ BotPlugin.prototype = {
 		for (var z=1, args=[]; z<arguments.length; z++)
 			args.push (arguments[z]);
 
-		setTimeout (function () {
+		// setTimeout -> nextTick
+		process.nextTick (function () {
 			if (debug.event)
 				that.log.info ('Call event ->', type, '\nWith arguments:', args);
 			
@@ -202,7 +203,7 @@ BotPlugin.prototype = {
 					}
 				}
 			}
-		}, 1);
+		});
 	},
 	/**
 	 * Boardcast an event with return value.

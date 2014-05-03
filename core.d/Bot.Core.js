@@ -75,7 +75,8 @@ CoreBot.prototype = {
 		return function () {
 			for (var newArgs = args, j = 0; j<arguments.length; j++)
 				newArgs.push (arguments[j]);
-			foo.apply (that, newArgs);
+			
+			return foo.apply (that, newArgs);
 		};
 	},
 	pollTimeThd: 0,
@@ -154,6 +155,9 @@ CoreBot.prototype = {
 		uin = uin.toString();
 		numTry = numTry || 0;
 		
+		if (debug.CORE)
+			that.mod.log.info ('uinToNum:', uin);
+		
 		var gp = isGroup ? 'group' : 'friend';
 		var queueName = 'uinToNum-' + uin + '-' + gp;
 		
@@ -163,7 +167,7 @@ CoreBot.prototype = {
 		if (!cache[gp]) {
 			cache[gp] = {};
 		} else if (cache[gp][uin]) {
-			cb(cache[gp][uin]);
+			process.nextTick (that.createCallback(that, cb, cache[gp][uin]));
 			return;
 		}
 		
@@ -198,6 +202,9 @@ CoreBot.prototype = {
 		if (that.mod.queue.reg (queueName, cb))
 			return;
 
+		if (debug.CORE)
+			that.mod.log.info ('qGetFriends');
+		
 		that.API.post ('/api/get_user_friends2', {
 			r: JSON.stringify ({
 				h: 'hello',
@@ -224,6 +231,9 @@ CoreBot.prototype = {
 		if (that.mod.queue.reg (queueName, cb))
 			return;
 
+		if (debug.CORE)
+			that.mod.log.info ('getGroupList');
+		
 		that.API.post ('/api/get_group_name_list_mask2', {
 			r: JSON.stringify ({
 				vfwebqq: this.auth.vfwebqq
@@ -265,6 +275,9 @@ CoreBot.prototype = {
 		if (that.mod.queue.reg (queueName, cb))
 			return;
 
+		if (debug.CORE)
+			that.mod.log.info ('getGroupInfo:', gcode);
+		
 		that.API.get ('/api/get_group_info_ext2', {
 			gcode: gcode,
 			vfwebqq: that.auth.vfwebqq,
@@ -337,6 +350,9 @@ CoreBot.prototype = {
 			// Not ready yet.
 			return;
 
+		if (debug.CORE)
+			that.mod.log.info ('getUser:', uin);
+		
 		cb (arrFilter(that.friends.info, function (u) { return uin === u.uin; }, {}));
 	},
 	getUserFromGroup: function (uin, gid, bNoCardNick, cb, numTry) {
@@ -347,6 +363,9 @@ CoreBot.prototype = {
 			// Not ready yet.
 			return;
 
+		if (debug.CORE)
+			that.mod.log.info ('getUserFromGroup:', uin);
+		
 		gid = gid.toString ();
 		var fooReloadGroup = function () {
 			if (numTry > that.conf.maxRetry) {
