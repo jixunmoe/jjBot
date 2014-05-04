@@ -3,6 +3,8 @@
 ## 关于该项目
 这是基于 NodeJS 开发的一个开源项目，其源代码托管于 [GitHub](https://github.com/JixunMoe/jjBot)。
 
+如果遇到问题，请先尝试翻阅 [Wiki](https://github.com/JixunMoe/jjBot/wiki/FAQ-常见问题)
+
 该项目授权采用 MIT 授权协议: 您可以自由修改及分发, 但请务必保留作者版权。
 
 项目成立于 2014 年 4 月, 因看到友人利用现有协议重写 [NekoBot](https://github.com/amphineko/nekobot)。~~一时脑热~~觉得挺好玩的于是毅然退出原本基于 [QQBot](https://github.com/xhan/qqbot) 开发的 [QBot](https://github.com/JixunMoe/qbot), 砍掉重写。
@@ -14,7 +16,7 @@
 * [饼干酱](https://github.com/amphineko) 带来的灵感
 * 前台-核心: [Angular](//angularjs.org) 提供~~灵活~~的模板书写方式。
 * 前台-核心: [jQuery](//jquery.com) 提供的网页操作 API
-* 前台-界面: [Bootstrap](//getbootstrap.com) 提供的~~~高大上~~~美观的界面。
+* 前台-界面: [Bootstrap](//getbootstrap.com) 提供的~~高大上~~美观的界面。
 * 前台-图标: 取自 [Jonas Rask](//jonasraskdesign.com) 绘制的 [DRF 图标包](https://www.iconfinder.com/iconsets/drf)。
 * 饼干交流群各位的帮助
 * 使用这个机器人的你 :)
