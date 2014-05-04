@@ -79,6 +79,8 @@ BotAPI.prototype = {
 	},
 	post: function (path, data, cb, host, numTry) {
 		var that = this;
+		numTry = numTry || 0;
+		
 		if (debug.api)
 			this.bot.log.info ('POST:', path);
 		if (debug.api_data)
@@ -101,6 +103,7 @@ BotAPI.prototype = {
 		}, onDataCallback(cb));
 		req.on('error', function (e) {
 			that.bot.log.error (e);
+			
 			if (numTry < that.bot.conf.maxRetry) {
 				this.bot.log.error ('POST Failed, retry ...', numTry);
 				
