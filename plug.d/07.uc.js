@@ -242,7 +242,7 @@ pluginUserCenter.prototype = {
 			var pem = target.pems;
 			
 			if (action == 'list') {
-				reply (that.ext._('[%s] 拥有的权限有: %s\n明令禁止的权限为: %s', target.userNick, pem.can.join('、'), pem.no.join('、')));
+				reply (that.ext._('[%s] 拥有的权限有: %s\n黑名单权限为: %s', target.userNick, pem.can.join('、'), pem.no.join('、')));
 				return;
 			}
 			
@@ -296,6 +296,39 @@ pluginUserCenter.prototype = {
 				}
 			});
 		});
+		
+		that.regEvent ('msg-cmd-pay', function (reply, msg, cmdObj, who, amount) {
+			amount = parseFloat (amount);
+			
+			if (isNaN(amount))
+				amount = 10;
+			if (amount < 0)
+				amount *=-1;
+			
+			if (!/^\d+$/.test(who))
+				return ; // Invalid target
+			
+			that.getUser (msg.from_uin, function (userSource) {
+				if (userSource.dMoneyLeft < amount) {
+					reply (that.ext._ ('%s: 您的余额不足以支付, 请检查后提交。', userSource.userNick || msg.user.nick));
+					return ;
+				}
+				
+				that.db.query ('update `jB_user` SET dMoneyLeft=? WHERE `qNum` = ?;',
+								[userSource.dMoneyLeft -= amount, userSource.qNum]);
+
+				that.getUserByNum (who, function (userTarget) {
+					that.db.query ('update `jB_user` SET dMoneyLeft=? WHERE `qNum` = ?;',
+									[userTarget.dMoneyLeft += amount, userTarget.qNum]);
+					
+					reply (that.ext._ ('%s: 成功转账 %s 给 %s, 剩余 %s %s。', 
+									userSource.userNick || msg.user.nick, amount, userTarget.userNick || '<匿名>',
+									userSource.dMoneyLeft, that.bot.conf.user.currency
+									));
+				});
+			});
+		});
+		
 		/*
 		that.regEvent ('msg-cmd-', function (reply, msg, cmdObj) {
 			that.getUser (msg.from_uin, function (user) {
