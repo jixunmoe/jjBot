@@ -67,7 +67,7 @@ BotAPI.prototype = {
 				'User-Agent': this.bot.conf.userAgent
 			}
 		}, onDataCallback(cb)).on('error', function (e) {
-			this.bot.mod.log.error (e);
+			that.bot.log.error (e);
 			if (numTry < that.bot.conf.maxRetry) {
 				this.bot.log.error ('GET Failed, retry ...', numTry);
 				
@@ -105,7 +105,7 @@ BotAPI.prototype = {
 			that.bot.log.error (e);
 			
 			if (numTry < that.bot.conf.maxRetry) {
-				this.bot.mod.log.error ('POST Failed, retry ...', numTry);
+				that.bot.log.error ('POST Failed, retry ...', numTry);
 				
 				process.nextTick (function () {
 					that.post (path, data, cb, host, numTry + 1);
