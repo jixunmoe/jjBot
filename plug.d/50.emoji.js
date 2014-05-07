@@ -24,7 +24,7 @@ pluginEmoji.prototype = {
 					reply ('嗷呜好可怕 oAo');
 				} else if (/♂\w/i.test(pMsg)) {
 					reply ('G♂O !!');
-				} else if (strMsg.indexOf('ω') != -1 || /\b>[\w\/\\ω ]<\b/.test(pMsg)) {
+				} else if (strMsg.indexOf('ω') != -1 || /(\W|^)>[\w\/\\ω ]*?<(\W|$)/.test(pMsg)) {
 					reply ('一本满足喵 >ω<');
 				} else if (/\b[o0][rt]z<\b/i.test(pMsg)) {
 					reply ('你的膝盖就由我收下了嗯 (自豪');
