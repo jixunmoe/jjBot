@@ -15,8 +15,9 @@ pluginEmoji.prototype = {
 		
 		// 安裝 Hook
 		this.regEvent ('msg', function (strMsg, msg, reply) {
-			if (Math.random() > 0.6) {
+			if (Math.random() > 0.3) {
 				var pMsg = strMsg.trim();
+				
 				if (/\bQ\wQ\b/i.test(pMsg)) {
 					// 表情嗷 oAo
 					reply ('骚年不哭, 咱们站起来lu~');
@@ -30,6 +31,10 @@ pluginEmoji.prototype = {
 					reply ('你的膝盖就由我收下了嗯 (自豪');
 				} else if (strMsg.indexOf('д') != -1) {
 					reply ('怎么了怎么了 (；ﾟДﾟ)');
+				} else if (/(\b|^)(各位|大家)?早安?[~|～]{0,3}($|\b)/.test(pMsg)) {
+					reply ('早上好嗷 oWo');
+				} else if (/(\b|^)((各位|大家)?晚安?|(碎|睡)觉)[~|～]{0,3}($|\b)/.test(pMsg)) {
+					reply ('晚安 [' + msg.user.nick + ']~ 祝好梦 ~~');
 				}
 			}
 		});
