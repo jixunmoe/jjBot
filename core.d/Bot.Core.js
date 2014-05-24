@@ -30,26 +30,73 @@ var CoreBot = function (conf, mod, mConf) {
 	that.Plugin.init ();
 };
 
-function hash_func (uin, ptwebqq) {
-	var hash_digits = '0123456789ABCDEF'.split(''),
-		table1 = [],
-		table2 = [],
-		ret = '',
-		tmpTable = [
-			uin >> 24 & 0xFF ^ 69,
-			uin >> 16 & 0xFF ^ 67,
-			uin >> 08 & 0xFF ^ 79,
-			uin       & 0xFF ^ 75  ];
+function UnknownClass (b, i) {
+	this.s = b || 0;
+	this.e = i || 0;
+}
 
-	// Generate a temp. table.
-	for (var i=0; i < ptwebqq.length; i++)
-		table1 [i % 4] ^= ptwebqq.charCodeAt(i);
-	// Finding
-	for (i=0; i < 8; i++) {
-		table2 [i] = (i & 1 ? tmpTable[i >> 1] : table1 [i >> 1]);
-		ret += hash_digits[table2 [i] >> 4 & 0x0F] + hash_digits[table2 [i] & 0x0F];
+function hash_func (uin, ptwebqq) {
+	var uinByte = [
+		uin >> 24 & 255,
+		uin >> 16 & 255,
+		uin >> 8 & 255,
+		uin & 255
+	];
+
+	var pwWebChar = ptwebqq.split ('').map (function (c) {
+		return c.charCodeAt(0);
+	});
+
+	var unknownArray = [new UnknownClass(0, pwWebChar.length - 1)];
+	
+	for (; unknownArray.length > 0;) {
+		var lastItem = unknownArray.pop();
+		
+		if (!(lastItem.s >= lastItem.e || lastItem.s < 0 || lastItem.e >= pwWebChar.length)){
+			if (lastItem.s + 1 == lastItem.e) {
+				// Swap
+				if (pwWebChar[lastItem.s] > pwWebChar[lastItem.e]) {
+					var tmp = pwWebChar[lastItem.s];
+					pwWebChar[lastItem.s] = pwWebChar[lastItem.e];
+					pwWebChar[lastItem.e] = tmp;
+				}
+			} else {
+				var sBit = lastItem.s,
+					eBit = lastItem.e,
+					f = pwWebChar[lastItem.s];
+				for (; lastItem.s < lastItem.e;) {
+					for (; lastItem.s < lastItem.e && pwWebChar[lastItem.e] >= f; lastItem.e--) {
+						uinByte[0] = uinByte[0] + 3 & 255;
+					}
+					
+					if (lastItem.s < lastItem.e) {
+						pwWebChar[lastItem.s] = pwWebChar[lastItem.e];
+						lastItem.s++;
+						uinByte[1] = uinByte[1] * 13 + 43 & 255;
+					}
+					
+					for (; lastItem.s < lastItem.e && pwWebChar[lastItem.s] <= f; lastItem.s++) {
+						uinByte[2] = uinByte[2] - 3 & 255;
+					}
+					
+					if (lastItem.s < lastItem.e) {
+						pwWebChar[lastItem.e] = pwWebChar[lastItem.s];
+						lastItem.e--;
+						uinByte[3] = (uinByte[0] ^ uinByte[1] ^ uinByte[2] ^ uinByte[3] + 1) & 255;
+					}
+				}
+				pwWebChar[lastItem.s] = f;
+				unknownArray.push(new UnknownClass(sBit, lastItem.s - 1));
+				unknownArray.push(new UnknownClass(lastItem.s + 1, eBit));
+			}
+		}
 	}
-	return ret;
+	var hexTable = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"];
+	var retKey = "";
+	for (var i = 0; i < uinByte.length; i++) {
+		retKey += hexTable[uinByte[i] >> 4 & 15] + hexTable[uinByte[i] & 15];
+	}
+	return retKey;
 }
 
 function joinObj (def) {
