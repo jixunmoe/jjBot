@@ -191,7 +191,9 @@ function modWeb (conf, mod) {
 		res.end();
 	};
 
-	mod.log.web ('Web Server launched at port:', conf.port);
+	var webPort = parseInt(__FLAG__.port || conf.port);
+	
+	mod.log.web ('Web Server launched at port:', webPort);
 	var imgServer = http.createServer (function (req, res) {
 		if (req.method == 'POST') {
 			var postData = '';
@@ -214,7 +216,7 @@ function modWeb (conf, mod) {
 		} else {
 			handleUrl (req, res, {});
 		}
-	}).listen(conf.port);
+	}).listen(webPort);
 
 	/**
 	 * Update the image in memory with the new one.

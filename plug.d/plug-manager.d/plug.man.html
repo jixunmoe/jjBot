@@ -49,11 +49,12 @@
 		</thead>
 
 		<tr ng-repeat="plug in plugs.disabled" ng-click="clickRow($event)">
-			<td><input type="checkbox" class="plug-enable" plug="{{plug}}"></td>
+			<td><input type="checkbox" class="plug-enable" plug="{{plug.name}}" ng-if="!plug.blacklist"></td>
 			<td>{{$index}}</td>
-			<td>{{plug}}</td>
+			<td>{{plug.name}}
+				<span class="label label-danger" ng-if="plug.blacklist">黑名单</span></td>
 			<td>
-				<button class="btn btn-default btn-sm" ng-click="rlPlug(plug)">
+				<button class="btn btn-default btn-sm" ng-click="rlPlug(plug)" ng-if="!plug.blacklist">
 					<span class="glyphicon glyphicon-plus"></span> 啓用
 				</button>
 			</td>

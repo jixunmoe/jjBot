@@ -41,6 +41,11 @@
       > Security WARNING <
       Anyone can access front-end without login.
 
+    --shareLogin
+      Skip login and use last login session, useful for debugging.
+      However there's a chance jjBot can't poll messages correctly, just
+      reboot without this argument and it'll be fine.
+
   Example:
     Login with QQ 10000, password "A_B-C 1" (without quote):
       node Boot.js --qnum 10000 --passwd "A_B-C 1"
@@ -50,5 +55,3 @@
 
     Debug plugin without login and debug plugin and web module:
       node Boot.js --config jjBot.debug.yaml --offline --debug plugin web
-
-  Enjoy.

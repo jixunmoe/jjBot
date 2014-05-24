@@ -42,12 +42,26 @@ var BotAuth = function (Bot) {
 	that.bot = Bot;
 	that.log = log;
 
+	if (__FLAG__.shareLogin) {
+		var prevLogin = Bot.mod.cache.load ('authLogin', false);
+		if (prevLogin.isLogin) {
+			that.log.info ('Using shared login for :', prevLogin.uin);
+
+			that.conf = prevLogin;
+			process.nextTick (function () {
+				that.bot.loginDone (false);
+			});
+			return ;
+		}
+	}
+	
 	// Command line argument.
 	Bot.conf.qqnum  = __FLAG__.qnum   ? __FLAG__.qnum[0]   : Bot.conf.qqnum ;
 	Bot.conf.passwd = __FLAG__.passwd ? __FLAG__.passwd[0] : Bot.conf.passwd;
 	
 	this.conf = {
 		isLogin: false,
+		cookie: [],
 		vfCode: '',
 		bitSalt: '',
 		login_sig: '',
@@ -69,14 +83,14 @@ var BotAuth = function (Bot) {
 		path: ('/check?uin=' + Bot.conf.qqnum + '&appid=1003903&js_ver=10062&js_type=0&r=') + Math.random(),
 		headers: { Cookie: 'chkuin=' + Bot.conf.qqnum }
 	}, onDataCallback (function (body, r) {
-		Bot.cookie = r.headers['set-cookie'];
+		that.conf.cookie = r.headers['set-cookie'];
 
 		var json = parseCallback (body);
 		if (3 != json.length) throw new Error ('Unable to fetch VFCODE status: ' + body);
 		log.info ('vf-status:', json);
 		that.checkVFCode (parseInt (json[0]), json[1], json[2]);
 	}, function (r) {
-		Bot.cookie = Bot.cookie.concat (r.headers['set-cookie']);
+		that.conf.cookie = that.conf.cookie.concat (r.headers['set-cookie']);
 	})).on ('error', function (e) {
 		log.error ('[LOGIN-VFCODE-CHECK]', e);
 		process.exit (1);
@@ -113,7 +127,7 @@ BotAuth.prototype = {
 			that.bot.log.info ('vfCode downloaded, open your browser and type it.');
 			that.bot.mod.web.updateVarifyCode (body);
 		}, function (r) {
-			that.bot.cookie = that.bot.cookie.concat (r.headers['set-cookie']);
+			that.conf.cookie = that.conf.cookie.concat (r.headers['set-cookie']);
 			r.setEncoding ('binary');
 		}));
 	},
@@ -186,13 +200,13 @@ BotAuth.prototype = {
 							'&webqq_type=10&remember_uin=1&login2qq=1&aid=1003903&u1=http%3A%2F%2Fweb2.qq.com%2Floginproxy.html%3Flogin2qq%3D1%26webqq_type%3D10&h=1&ptredirect=0&ptlang=2052&daid=164&from_ui=1&pttype=1&dumy=&fp=loginerroralert&action=' + 
 							that.ranActionCode () +
 							'&mibao_css=m_webqq&t=1&g=1&js_type=0&js_ver=10062&login_sig=' + newSig,
-					headers: { Cookie: that.bot.cookie }
+					headers: { Cookie: that.conf.cookie }
 				}, onDataCallback(function (data, r) {
 					var ptuiCB = parseCallback(data);
 					[0,1,3].forEach(function (e) { ptuiCB[e] = parseInt (ptuiCB[e]); });
 					that.ptuiCB.apply (that, ptuiCB);
 				}, function (r) {
-					that.bot.cookie = that.bot.cookie.concat (r.headers['set-cookie']);
+					that.conf.cookie = that.conf.cookie.concat (r.headers['set-cookie']);
 				}));
 			});
 	}, 
@@ -213,10 +227,10 @@ BotAuth.prototype = {
 		http.get ({
 			host: nextUrlObj.host,
 			path: nextUrlObj.path,
-			headers: { Cookie: that.bot.cookie }
+			headers: { Cookie: that.conf.cookie }
 		}, onDataCallback(function (data, r) {
 			that.conf.ptwebqq =
-				that.bot.cookie.filter (function (e) { return e.indexOf ('ptwebqq') != -1; })
+				that.conf.cookie.filter (function (e) { return e.indexOf ('ptwebqq') != -1; })
 					.pop().replace(/ptwebqq\=(.*?);.*/, '$1');
 
 			var postData = qs.stringify ({
@@ -239,7 +253,7 @@ BotAuth.prototype = {
 					Referer: 'http://d.web2.qq.com/proxy.html?v=20110331002&callback=1&id=2',
 					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
 					'Content-Length': Buffer.byteLength(postData),
-					Cookie: that.bot.cookie
+					Cookie: that.conf.cookie
 				}
 			}, onDataCallback(function (data, r) {
 				var loginInfo = JSON.parse (data);
@@ -256,7 +270,7 @@ BotAuth.prototype = {
 			})).end (postData);
 		}, function (r) {
 			// Join Cookies.
-			that.bot.cookie = that.bot.cookie.concat (r.headers['set-cookie']);
+			that.conf.cookie = that.conf.cookie.concat (r.headers['set-cookie']);
 		}));
 	}
 };

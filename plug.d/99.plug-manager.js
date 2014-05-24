@@ -84,8 +84,12 @@ pluginReloadAll.prototype = {
 			var allPlugs = fs.readdirSync(this.bot.conf.plugPath);
 			var unLoadedPlugs = [];
 			for(var i=0; i<allPlugs.length; i++) {
-				if (plugNames.indexOf(allPlugs[i]) == -1 && !fs.lstatSync(realPath + allPlugs[i]).isDirectory())
-					unLoadedPlugs.push(allPlugs[i]);
+				if (plugNames.indexOf(allPlugs[i]) == -1 && !fs.lstatSync(realPath + allPlugs[i]).isDirectory()) {
+					unLoadedPlugs.push({
+						name: allPlugs[i],
+						blacklist: that.bot.Plugin.isBlacklist(allPlugs[i])
+					});
+				}
 			}
 			
 			return {

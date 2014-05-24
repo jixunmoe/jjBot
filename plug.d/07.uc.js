@@ -60,7 +60,14 @@ pluginUserCenter.prototype = {
 		if (!cb) return null; // Invalid request.
 		
 		var that = this;
-		that.bot.uinToNum(uin, false, function (userNum) { that.getUserByNum (userNum, cb); });
+		var userNum = that.bot.friendHashTable.table[uin];
+		
+		if (userNum) {
+			that.getUserByNum (userNum, cb);
+			return ;
+		}
+		
+		that.bot.log.warn ('User not found for uin:', uin);
 	},
 	getUserByNum: function (userNum, cb) {
 		if (!cb) return null; // Invalid request.

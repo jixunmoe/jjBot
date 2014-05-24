@@ -7,7 +7,7 @@ var http = require ('http'),
 var apiHost = 's.web2.qq.com',
 	apiProxy= 'http://d.web2.qq.com/proxy.html?v=20110331002&callback=1&id=3';
 
-function onDataCallback (cb, preSetup) {
+function onDataCallback (that, cb, preSetup) {
 	var body = '';
 	return function (r) {
 		if (preSetup)
@@ -22,7 +22,7 @@ function onDataCallback (cb, preSetup) {
 			try {
 				obj = JSON.parse(body);
 			} catch (e) {
-				console.error (e, body);
+				that.bot.log.error (e, body);
 			}
 			
 			process.nextTick (function () {
@@ -62,14 +62,14 @@ BotAPI.prototype = {
 			path: path,
 			mathod: 'GET',
 			headers: {
-				Cookie: that.bot.cookie,
+				Cookie: that.bot.auth.cookie,
 				Referer: apiProxy,
 				'User-Agent': this.bot.conf.userAgent
 			}
-		}, onDataCallback(cb)).on('error', function (e) {
+		}, onDataCallback(that, cb)).on('error', function (e) {
 			that.bot.log.error (e);
 			if (numTry < that.bot.conf.maxRetry) {
-				this.bot.log.error ('GET Failed, retry ...', numTry);
+				that.bot.log.error ('GET Failed, retry ...', numTry);
 				
 				process.nextTick (function () {
 					that.get (path, query, cb, numTry + 1);
@@ -96,11 +96,11 @@ BotAPI.prototype = {
 			headers: {
 				'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
 				'Content-Length': Buffer.byteLength(postData),
-				Cookie: that.bot.cookie,
+				Cookie: that.bot.auth.cookie,
 				Referer: apiProxy,
 				'User-Agent': this.bot.conf.userAgent
 			}
-		}, onDataCallback(cb));
+		}, onDataCallback(that, cb));
 		req.on('error', function (e) {
 			that.bot.log.error (e);
 			

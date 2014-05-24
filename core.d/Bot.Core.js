@@ -12,6 +12,49 @@ var BotAuth   = require ('./Bot.Auth'),
 
 function objEmpty (obj) { return !Object.keys(obj).length; }
 function t () { return +new Date(); }
+function loopArray (that, arr, fooLoop, fooLast) {
+	var arrLen   = arr.length,
+		curIndex = 0;
+
+	for (var i = 4, extraArgs = []; i < arguments.length; i++)
+		extraArgs.push (arguments[i]);
+
+	var fooNext = function () {
+		var args = extraArgs.slice();
+		args.splice(0, 0, fooNext);
+		for (var i=0; i<arguments.length; i++)
+			args.push (arguments[i]);
+
+		if (curIndex >= arrLen) {
+			fooLast.apply(that, args);
+		} else {
+			args.splice(1, 0, arr[curIndex]);
+			if (fooLoop) fooLoop.apply(that, args);
+		}
+
+		curIndex++;
+	};
+
+	process.nextTick (fooNext);
+}
+
+function delayFunction (that, foo, delay) {
+	for (var i = 3, extraArgs = []; i<arguments.length; i++)
+		extraArgs.push (arguments[i]);
+
+	return function () {
+		for (var i= 0, args = extraArgs.slice(); i<arguments.length; i++)
+			args.push (arguments[i]);
+
+		setTimeout(function () {
+			foo.apply(that, args);
+		}, delay || safeDelay());
+	};
+}
+
+function safeDelay () {
+	return 400 + 500 * Math.random();
+}
 
 var CoreBot = function (conf, mod, mConf) {
 	var that = this;
@@ -19,7 +62,6 @@ var CoreBot = function (conf, mod, mConf) {
 	mod.web.initBot (that);
 
 	that.conf = conf;
-	that.cookie = [];
 	that.mod = mod;
 	that.log = mod.log;
 	that.API = new BotAPI (that);
@@ -30,12 +72,12 @@ var CoreBot = function (conf, mod, mConf) {
 	that.Plugin.init ();
 };
 
-function UnknownClass (b, i) {
-	this.s = b || 0;
-	this.e = i || 0;
-}
-
 function hash_func (uin, ptwebqq) {
+	var HashKeyStruct = function (s, e) {
+		this.s = s || 0;
+		this.e = e || 0;
+	};
+	
 	var uinByte = [
 		uin >> 24 & 255,
 		uin >> 16 & 255,
@@ -47,9 +89,9 @@ function hash_func (uin, ptwebqq) {
 		return c.charCodeAt(0);
 	});
 
-	var unknownArray = [new UnknownClass(0, pwWebChar.length - 1)];
+	var unknownArray = [new HashKeyStruct(0, pwWebChar.length - 1)];
 	
-	for (; unknownArray.length > 0;) {
+	for (;unknownArray.length;) {
 		var lastItem = unknownArray.pop();
 		
 		if (!(lastItem.s >= lastItem.e || lastItem.s < 0 || lastItem.e >= pwWebChar.length)){
@@ -64,6 +106,7 @@ function hash_func (uin, ptwebqq) {
 				var sBit = lastItem.s,
 					eBit = lastItem.e,
 					f = pwWebChar[lastItem.s];
+				
 				for (; lastItem.s < lastItem.e;) {
 					for (; lastItem.s < lastItem.e && pwWebChar[lastItem.e] >= f; lastItem.e--) {
 						uinByte[0] = uinByte[0] + 3 & 255;
@@ -86,12 +129,12 @@ function hash_func (uin, ptwebqq) {
 					}
 				}
 				pwWebChar[lastItem.s] = f;
-				unknownArray.push(new UnknownClass(sBit, lastItem.s - 1));
-				unknownArray.push(new UnknownClass(lastItem.s + 1, eBit));
+				unknownArray.push(new HashKeyStruct(sBit, lastItem.s - 1));
+				unknownArray.push(new HashKeyStruct(lastItem.s + 1, eBit));
 			}
 		}
 	}
-	var hexTable = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"];
+	var hexTable = '0123456789ABCDEF'.split('');
 	var retKey = "";
 	for (var i = 0; i < uinByte.length; i++) {
 		retKey += hexTable[uinByte[i] >> 4 & 15] + hexTable[uinByte[i] & 15];
@@ -160,7 +203,21 @@ CoreBot.prototype = {
 			});
 		});
 	},
-	loginDone: function () {
+	saveAuth: function () {
+		this.mod.cache.save ('authLogin', this.auth);
+	},
+	
+	cacheUsable: function (cacheName, namespace) {
+		if (__FLAG__.noChatCache) {
+			this[namespace || cacheName] = {};
+			return false;
+		}
+		
+		var tmpCache = this[namespace || cacheName] = this.mod.cache.load (cacheName);
+		return tmpCache.vfAuth == this.auth.vfwebqq;
+	},
+	
+	loginDone: function (bDontSaveConf) {
 		this.mod.log.info ('loginDone, Begin poll.');
 		
 		if (__FLAG__.offline) {
@@ -170,7 +227,7 @@ CoreBot.prototype = {
 			this.groups = this.mod.cache.load ('groupInfo');
 			this.auth = {
 				clientid: '',
-				uin: 'abcd',
+				uin: '11111111111',
 				ptwebqq: 'ffffffffffffffffffffffffffffffff',
 				vfwebqq: 'ffffffffffffffffffffffffffffffff'
 			};
@@ -181,18 +238,60 @@ CoreBot.prototype = {
 		this.auth = this.Auth.conf;
 		this.doPollLoop ();
 
-		this.friends = {};
-		//if (objEmpty(this.friends = this.mod.cache.load ('friendInfo')))
+		if (this.cacheUsable ('friendInfo', 'friends')) {
+			this.log.info ('Using cache for friends list.');
+			
+			if (!this.cacheUsable ('friendHashTable')) {
+				this.getFriendsTable ();
+			}
+		} else {
+			// Friends cache not avlible...
 			this.getFriends ();
-
-		this.groups = {};
-		this.groupList = {};
-		//if (objEmpty(this.groupList = this.mod.cache.load ('groupList')))
+		}
+		
+		if (this.cacheUsable ('groupList')) {
+			this.log.info ('Using cache for group list.');
+			
+			if (this.cacheUsable('groupInfo', 'groups')) {
+				this.log.info ('Using cache for group info.');
+				
+				if (this.cacheUsable('groupHashTable')) {
+					this.log.info ('Using cache for groupHashTable.');
+				} else {
+					this.getAllGroupHashTable ();
+				}
+			} else {
+				// After this.getAllGroupInfo done it will call the function to 
+				// fetch all the numbers and save to cache.
+				this.getAllGroupInfo ();
+			}
+		} else {
+			// Groups are used to store group info.
+			this.groups = {
+				vfAuth: this.auth.vfwebqq
+			};
+			
+			// This will fetch the group list. 
+			// After that, it will call this.getAllGroupInfo;
 			this.getGroupList ();
-		//else
-		//	this.getAllGroupInfo ();
-
+		}
+		
+		if (!bDontSaveConf) this.saveAuth ();
 	},
+	
+	getUin: function (num, isGroup) {
+		var table = isGroup ?
+				this.groupHashTable
+				: this.friendHashTable;
+		
+		for (var uin in table)
+			if (table[num] == num)
+				return num;
+		
+		this.log.info ('Fetch uin failed: Num', num, 'not exist in', isGroup ? 'group' : 'friends', 'list.');
+		return null;
+	},
+	
 	/**
 	 * UIN/GID to QQNum
 	 */
@@ -241,6 +340,35 @@ CoreBot.prototype = {
 			}
 		});
 	},
+	
+	getFriendsTable: function (cb) {
+		var that = this;
+		
+		var queueName = 'qGetRealFriendNum';
+		if (that.mod.queue.reg (queueName, cb)) return;
+
+		that.friendHashTable = {
+			vfAuth: that.auth.vfwebqq,
+			table: {}
+		};
+		
+		that.log.info ('Fetch real QQ Num...');
+		loopArray (that, that.friends.info, function (next, friend) {
+			// 抓取真实号码
+			that.uinToNum (friend.uin, false, function (realNum) {
+				that.log.info ('QQ', realNum.toString(), '->', friend.nick);
+				that.friendHashTable.table[friend.uin.toString()] = realNum;
+				
+				delayFunction(this, next)();
+			});
+		}, function () {
+			// Done.
+			this.log.info ('Fetch real QQ Num done.');
+			that.mod.cache.save ('friendHashTable', that.friendHashTable);
+			that.mod.queue.done (queueName, that.friendHashTable);
+		});
+	},
+	
 	getFriends: function (cb, numTry) {
 		var that = this;
 		numTry = numTry || 0;
@@ -259,15 +387,24 @@ CoreBot.prototype = {
 				vfwebqq: that.auth.vfwebqq
 			})
 		}, function (ret) {
-			if (ret.retcode) {
+			if (ret.retcode == 50) {
+				that.log.error ('Fetch friend list(50): ptWebQQ expired, reboot jjBot without --shareLogin.');
+				// process.exit (11);
+			} else if (ret.retcode) {
 				that.log.error ('Fetch friend list error:', ret);
+				
 				that.mod.queue.unlock (queueName);
 				if (numTry < that.conf.maxRetry)
 					that.getFriends (cb, numTry + 1);
 			} else {
 				that.friends = ret.result;
+				that.friends.vfAuth = that.auth.vfwebqq;
+				
 				that.mod.cache.save ('friendInfo', that.friends);
 				that.mod.queue.done(queueName, that.friends);
+				
+				// 请求抓取好友号码
+				that.getFriendsTable ();
 			}
 		});
 	},
@@ -293,16 +430,58 @@ CoreBot.prototype = {
 					that.getGroupList (cb, numTry + 1);
 			} else {
 				that.groupList = ret.result;
+				that.groupList.vfAuth = that.auth.vfwebqq;
 				that.mod.cache.save('groupList', that.groupList);
 				that.getAllGroupInfo ();
 				that.mod.queue.done (queueName, that.groupList);
 			}
 		});
 	},
-	getAllGroupInfo: function () {
-		for(var i = this.groupList.gnamelist.length; i--; )
-			if (this.getGroupInfo(this.groupList.gnamelist[i].code.toString()))
-				break;
+	
+	getAllGroupHashTable: function (cb, bForceUpd) {
+		var queueName = 'qGetAllGroupHashTable';
+		if (this.mod.queue.reg (queueName, cb)) return;
+		var that = this;
+		
+		if (!bForceUpd && this.cacheUsable('groupHashTable')) {
+			this.log.warn ('groupHashTable: Not expired yet, refuse reload hash table.');
+			return ;
+		}
+		
+		that.groupHashTable = {
+			vfAuth: that.auth.vfwebqq,
+			table: {}
+		};
+		
+		// 抓取群号
+		loopArray (this, this.groupList.gnamelist, function (next, group) {
+			var groupId = group.code.toString();
+			this.uinToNum (groupId, true, function (realNum) {
+				that.log.info ('Fetch group num ->', realNum);
+				that.groupHashTable.table[groupId] = realNum;
+				
+				delayFunction(this, next)();
+			});
+		}, function () {
+			that.log.info ('Fetch group num finish.');
+			that.mod.cache.save ('groupHashTable', that.groupHashTable);
+			that.mod.queue.done(queueName, that.groupHashTable);
+		});
+	},
+	
+	getAllGroupInfo: function (cb) {
+		var queueName = 'qGetAllGroupInfo';
+		if (this.mod.queue.reg (queueName, cb)) return;
+		
+		this.log.info ('Fetch all group info...');
+		
+		// 抓取群组数据
+		loopArray (this, this.groupList.gnamelist, function (next, group) {
+			this.getGroupInfo (group.code.toString(), false, delayFunction(this, next));
+		}, function () {
+			this.getAllGroupHashTable ();
+			this.mod.queue.done(queueName);
+		});
 	},
 	getGroupInfo: function (gcode, bIgnoreCache, cb, numTry) {
 		var that = this;
@@ -402,7 +581,7 @@ CoreBot.prototype = {
 		
 		cb (arrFilter(that.friends.info, function (u) { return uin === u.uin; }, {}));
 	},
-	// TODO: Fix crash when some one joined.
+	
 	getUserFromGroup: function (uin, gid, bNoCardNick, cb, numTry) {
 		var that = this, args = arguments;
 		numTry = args[4] = numTry ? numTry + 1 : 1;
@@ -421,7 +600,9 @@ CoreBot.prototype = {
 		if (!that.groups[gid]) {
 			if (debug.group)
 				that.mod.log.warn ('GID:', gid, ' not exist, reload Group List.');
-			return that.getGroupList ();
+			
+			that.getGroupList ();
+			return ;
 		}
 
 		// 选择用户数据
@@ -492,6 +673,11 @@ CoreBot.prototype = {
 			this, this.sendMsg, msg.isGroup, msg.from_gid || msg.from_uin)
 		);
 	},
+	
+	lastErrorPoll: function (code) {
+		this.lastError = {};
+	},
+	
 	parsePoll: function (poll) {
 		var that = this;
 		if (debug.poll)
@@ -502,12 +688,20 @@ CoreBot.prototype = {
 				if (debug.poll)
 					that.log.info ('Update ptwebqq to', poll.p);
 				this.auth.ptwebqq = poll.p;
+				this.mod.cache.save ('authLogin', this.auth);
 				return;
 			case 102:
 			case 103:
 				if (debug.poll)
-					that.log.info ('Poll :: No Message.');
+					that.log.info ('Poll :: No Message [', poll.retcode, ']');
+				
 				return;
+				
+			case 121:
+				that.log.error ('121 Death poll.');
+				process.exit (13);
+				return ;
+				
 			case 0:
 				// 一切正常
 				break;

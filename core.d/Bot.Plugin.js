@@ -38,21 +38,39 @@ BotPlugin.prototype = {
 		var plugins = fs.readdirSync(this.bot.conf.plugPath);
 
 		for (var i = 0; i < plugins.length; i++)
-			this.loadPlugin (plugins[i], bForceReload);
+			this.loadPlugin (plugins[i], bForceReload, true);
 	},
+	
+	isBlacklist: function () {
+		if (!this.bot.conf.blacklist)
+			// There isn't any blacklist defined.
+			return false;
+		
+		for (var i=0, plugName; i<arguments.length; i++)
+			if (-1 !== this.bot.conf.blacklist.indexOf (arguments[i].replace(/^\d+\.|\.js$/g, '')))
+				// One of the plugin is on the black list.
+				return true;
+		return false;
+	},
+	
 	/**
 	 * Loads specific plugin by its name.
 	 * @param  {String } sPlugFile    The filename of the plugin
 	 * @param  {Boolean} bForceReload Optional, if set to true is going to force reload it.
 	 * @return {None   }
 	 */
-	loadPlugin: function (sPlugFile, bForceReload) {
+	loadPlugin: function (sPlugFile, bForceReload, bCheckBlacklist) {
 		var plugPath = path.resolve(__ROOT__, this.bot.conf.plugPath + sPlugFile);
 		if (fs.lstatSync(plugPath).isDirectory())
 			// Is a directory, not a valid plugin.
 			return;
 		
 		var that = this;
+		
+		if (this.isBlacklist(sPlugFile)) {
+			return ;
+		}
+		
 		that.log.info ('Loading plugin ', sPlugFile, '...');
 
 		if (bForceReload)

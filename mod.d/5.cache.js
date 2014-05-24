@@ -40,7 +40,7 @@ mCache.prototype = {
 		var that = this;
 
 		// Store cache in to memory
-		this.cache[name] = (function () {
+		return (this.cache[name] = (function () {
 			if (fs.existsSync (that.cacheD + name)) {
 				try {
 					return JSON.parse (fs.readFileSync(that.cacheD + name));
@@ -50,9 +50,7 @@ mCache.prototype = {
 				}
 			}
 			return def || {};
-		}) ();
-
-		return this.cache[name];
+		}) ());
 	},
 	/**
 	 * Remove Cache from memory and filesystem
