@@ -31,9 +31,9 @@ pluginEmoji.prototype = {
 					reply ('你的膝盖就由我收下了嗯 (自豪');
 				} else if (strMsg.indexOf('д') != -1) {
 					reply ('怎么了怎么了 (；ﾟДﾟ)');
-				} else if (/(\b|^)(各位|大家)?早安?[~|～]{0,3}($|\b)/.test(pMsg)) {
+				} else if (/([\b\s]|^)(各位|大家)?早安?[~|～]{0,3}($|[\b\s])/.test(pMsg)) {
 					reply ('早上好嗷 oWo');
-				} else if (/(\b|^)((各位|大家)?晚安?|(碎|睡)觉)[~|～]{0,3}($|\b)/.test(pMsg)) {
+				} else if (/([\b\s]|^)((各位|大家)?晚安?|(碎|睡)觉)[~|～]{0,3}($|[\b\s])/.test(pMsg)) {
 					reply ('晚安 [' + msg.user.nick + ']~ 祝好梦 ~~');
 				}
 			}
