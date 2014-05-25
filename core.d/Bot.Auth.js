@@ -55,11 +55,9 @@ var BotAuth = function (Bot) {
 		}
 	}
 	
-	// Command line argument.
-	Bot.conf.qqnum  = __FLAG__.qnum   ? __FLAG__.qnum[0]   : Bot.conf.qqnum ;
-	Bot.conf.passwd = __FLAG__.passwd ? __FLAG__.passwd[0] : Bot.conf.passwd;
-	
 	this.conf = {
+		qqnum:  __FLAG__.qnum ? __FLAG__.qnum[0] : Bot.conf.qqnum.toString(),
+		passwd: __FLAG__.passwd ? __FLAG__.passwd[0] : Bot.conf.passwd,
 		isLogin: false,
 		cookie: [],
 		vfCode: '',
@@ -68,6 +66,8 @@ var BotAuth = function (Bot) {
 		psessionid: '',
 		uin: '',
 		vfwebqq: '',
+		gface_key: '',
+		gface_sig: '',
 		clientid: Math.floor (97500000 + Math.random() * 99999) + ''
 	};
 
@@ -80,8 +80,8 @@ var BotAuth = function (Bot) {
 	log.info ('Check vfcode...');
 	https.get ({
 		host: 'ssl.ptlogin2.qq.com',
-		path: ('/check?uin=' + Bot.conf.qqnum + '&appid=1003903&js_ver=10062&js_type=0&r=') + Math.random(),
-		headers: { Cookie: 'chkuin=' + Bot.conf.qqnum }
+		path: ('/check?uin=' + this.conf.qqnum + '&appid=1003903&js_ver=10062&js_type=0&r=') + Math.random(),
+		headers: { Cookie: 'chkuin=' + this.conf.qqnum }
 	}, onDataCallback (function (body, r) {
 		that.conf.cookie = r.headers['set-cookie'];
 
@@ -122,7 +122,7 @@ BotAuth.prototype = {
 		var that = this;
 		http.get ({
 			host: 'captcha.qq.com',
-			path: 'getimage?aid=1003903&r=' + Math.random() + '&uin=' + this.bot.conf.qqnum
+			path: 'getimage?aid=1003903&r=' + Math.random() + '&uin=' + this.conf.qqnum
 		}, onDataCallback (function (body, r) {
 			that.bot.log.info ('vfCode downloaded, open your browser and type it.');
 			that.bot.mod.web.updateVarifyCode (body);
@@ -189,13 +189,13 @@ BotAuth.prototype = {
 				}
 			})
 			.then (function (next, newSig) {
-				var firstPass  = that.hex2ascii (that.md5 (that.bot.conf.passwd, true)) + that.hex2ascii (that.conf.bitSalt),
+				var firstPass  = that.hex2ascii (that.md5 (that.conf.passwd, true)) + that.hex2ascii (that.conf.bitSalt),
 					finalPasswd = that.md5(that.md5(firstPass) + that.conf.vfCode.toUpperCase());
 				that.log.info ('Check passwd:', finalPasswd);
 
 				https.get ({
 					host: 'ssl.ptlogin2.qq.com',
-					path: '/login?u=' + that.bot.conf.qqnum + '&p=' + finalPasswd +
+					path: '/login?u=' + that.conf.qqnum + '&p=' + finalPasswd +
 							'&verifycode=' + that.conf.vfCode + 
 							'&webqq_type=10&remember_uin=1&login2qq=1&aid=1003903&u1=http%3A%2F%2Fweb2.qq.com%2Floginproxy.html%3Flogin2qq%3D1%26webqq_type%3D10&h=1&ptredirect=0&ptlang=2052&daid=164&from_ui=1&pttype=1&dumy=&fp=loginerroralert&action=' + 
 							that.ranActionCode () +
@@ -266,12 +266,48 @@ BotAuth.prototype = {
 				that.conf.uin        = loginInfo.result.uin;
 				that.conf.vfwebqq    = loginInfo.result.vfwebqq;
 				that.conf.psessionid = loginInfo.result.psessionid;
-				that.bot .loginDone ();
+				
+				// Get face key: Not required, so we're just going to do it async.
+				that.getGroupFaceSign ();
+				
+				process.nextTick(that.bot.loginDone.bind(that.bot));
 			})).end (postData);
 		}, function (r) {
 			// Join Cookies.
 			that.conf.cookie = that.conf.cookie.concat (r.headers['set-cookie']);
 		}));
+	},
+	getGroupFaceSign: function () {
+		var that = this;
+		
+		this.bot.log.info ('Fetch Group Face Sig..');
+		
+		http.get ({
+			host: 'd.web2.qq.com',
+			path: '/channel/get_gface_sig2?clientid=' + that.conf.clientid + '&psessionid=' + that.conf.psessionid + '&t=' + (+new Date ()),
+			headers: {
+				'User-Agent': that.bot.conf.userAgent,
+				Referer: 'http://d.web2.qq.com/',
+				Cookie: that.conf.cookie
+			}
+		}, onDataCallback(function (data, r) {
+			var gSign = JSON.parse (data);
+			
+			if (gSign.retcode) {
+				that.bot.log.error ('Get group face sign failed:', gSign);
+				process.exit (14);
+			}
+			
+			that.conf.gface_key = gSign.result.gface_key;
+			that.conf.gface_sig = gSign.result.gface_sig;
+			
+			that.bot.saveAuth ();
+			
+			that.bot.log.info ('Fetch Group Face Sig finish!');
+		})).on ('error', function (e) {
+			that.bot.log.error ('[LOGIN-GET-FACE-SIGN]', e);
+			process.exit (15);
+		});
 	}
 };
 

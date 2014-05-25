@@ -8,7 +8,32 @@ var http  = require ('http'),
 var BotAuth   = require ('./Bot.Auth'),
 	BotWebAPI = require ('./Bot.WebAPI'),
 	BotAPI    = require ('./Bot.API'),
+	BotChat   = require ('./Bot.Chat'),
 	BotPlugin = require ('./Bot.Plugin');
+
+var fixCookie = function (cookie) {
+	var result = {},
+		secPass = [];
+
+	if (cookie.length == 1)
+		return cookie;
+	
+	cookie.forEach (function (item) {
+		var arrMatch = item.match(/^(.+?)=(.*?);/);
+		// Just keep everything.
+		if (!arrMatch || !arrMatch[2]) return ;
+		result[arrMatch[1]] = arrMatch[2];
+	});
+
+	for (var x in result) {
+		if (result[x]) {
+			secPass.push (x + '=' + result[x]);
+		}
+	}
+
+	return [secPass.join ('; ')];
+};
+
 
 function objEmpty (obj) { return !Object.keys(obj).length; }
 function t () { return +new Date(); }
@@ -57,19 +82,21 @@ function safeDelay () {
 }
 
 var CoreBot = function (conf, mod, mConf) {
-	var that = this;
+	this.auth = { };
 
-	mod.web.initBot (that);
+	if (mod.web)
+		mod.web.initBot (this);
 
-	that.conf = conf;
-	that.mod = mod;
-	that.log = mod.log;
-	that.API = new BotAPI (that);
-	that.auth = { };
-	that.Auth = new BotAuth (that);
-	that.WebAPI = new BotWebAPI (that);
-	that.Plugin = new BotPlugin (that);
-	that.Plugin.init ();
+	// Init. core modules.
+	this.conf = conf;
+	this.mod = mod;
+	this.log = mod.log;
+	this.API = new BotAPI (this);
+	this.Chat = new BotChat (this);
+	this.Auth = new BotAuth (this);
+	this.WebAPI = new BotWebAPI (this);
+	this.Plugin = new BotPlugin (this);
+	this.Plugin.init ();
 };
 
 function hash_func (uin, ptwebqq) {
@@ -159,9 +186,11 @@ function arrFilter (arr, cb, def) {
 
 CoreBot.prototype = {
 	createCallback: function (that, foo) {
+		this.log.warn ('Don\'t use createCallback, use Function.bind instead!!');
+		
 		for (var i=2, args=[]; i<arguments.length; i++)
 			args.push (arguments[i]);
-
+		
 		return function () {
 			for (var newArgs = args, j = 0; j<arguments.length; j++)
 				newArgs.push (arguments[j]);
@@ -207,14 +236,22 @@ CoreBot.prototype = {
 		this.mod.cache.save ('authLogin', this.auth);
 	},
 	
-	cacheUsable: function (cacheName, namespace) {
-		if (__FLAG__.noChatCache) {
-			this[namespace || cacheName] = {};
-			return false;
+	cacheInit: function (cacheName, namespace) {
+		if (!__FLAG__.noChatCache) {
+			// Can use cache, check if cache is usable.
+			var tmpCache = this[namespace || cacheName] = this.mod.cache.load (cacheName);
+			if (tmpCache.vfAuth == this.auth.vfwebqq)
+				return true;
 		}
 		
-		var tmpCache = this[namespace || cacheName] = this.mod.cache.load (cacheName);
-		return tmpCache.vfAuth == this.auth.vfwebqq;
+		this[namespace || cacheName] = {
+			vfAuth: this.auth.vfwebqq,
+			table:  {}
+		};
+		return false;
+	},
+	cacheSave: function (cacheName, namespace) {
+		this.mod.cache.save (cacheName, this[namespace || cacheName]);
 	},
 	
 	loginDone: function (bDontSaveConf) {
@@ -236,12 +273,14 @@ CoreBot.prototype = {
 		
 		// 简写
 		this.auth = this.Auth.conf;
+		this.auth.cookie = fixCookie (this.auth.cookie);
+		
 		this.doPollLoop ();
 
-		if (this.cacheUsable ('friendInfo', 'friends')) {
+		if (this.cacheInit ('friendInfo', 'friends')) {
 			this.log.info ('Using cache for friends list.');
 			
-			if (!this.cacheUsable ('friendHashTable')) {
+			if (!this.cacheInit ('friendHashTable')) {
 				this.getFriendsTable ();
 			}
 		} else {
@@ -249,13 +288,13 @@ CoreBot.prototype = {
 			this.getFriends ();
 		}
 		
-		if (this.cacheUsable ('groupList')) {
+		if (this.cacheInit ('groupList')) {
 			this.log.info ('Using cache for group list.');
 			
-			if (this.cacheUsable('groupInfo', 'groups')) {
+			if (this.cacheInit('groupInfo', 'groups')) {
 				this.log.info ('Using cache for group info.');
 				
-				if (this.cacheUsable('groupHashTable')) {
+				if (this.cacheInit('groupHashTable')) {
 					this.log.info ('Using cache for groupHashTable.');
 				} else {
 					this.getAllGroupHashTable ();
@@ -267,14 +306,16 @@ CoreBot.prototype = {
 			}
 		} else {
 			// Groups are used to store group info.
-			this.groups = {
-				vfAuth: this.auth.vfwebqq
-			};
+			this.cacheInit('groups');
 			
 			// This will fetch the group list. 
 			// After that, it will call this.getAllGroupInfo;
 			this.getGroupList ();
 		}
+		
+		this.cacheInit ('uinCache');
+		
+		this.Chat.init ();
 		
 		if (!bDontSaveConf) this.saveAuth ();
 	},
@@ -305,19 +346,17 @@ CoreBot.prototype = {
 			that.mod.log.info ('uinToNum:', uin);
 		
 		var gp = isGroup ? 'group' : 'friend';
-		var queueName = 'uinToNum-' + uin + '-' + gp;
-		
-		var cache = that.mod.cache.load('uinMap');
 		
 		// If cache exists, just return the cache.
-		if (!cache[gp]) {
-			cache[gp] = {};
-		} else if (cache[gp][uin]) {
-			process.nextTick (that.createCallback(that, cb, cache[gp][uin]));
+		if (!this.uinCache.table[gp]) {
+			this.uinCache.table[gp] = {};
+		} else if (this.uinCache.table[gp][uin]) {
+			process.nextTick (cb.bind (that, this.uinCache.table[gp][uin]));
 			return;
 		}
 		
 		// Now lock the queue.
+		var queueName = 'uinToNum-' + uin + '-' + gp;
 		if (that.mod.queue.reg (queueName, cb))
 			return;
 		
@@ -330,7 +369,8 @@ CoreBot.prototype = {
 			t: t()
 		}, function (data) {
 			if (__FLAG__.offline || data && data.result) {
-				that.mod.queue.done (queueName, cache[gp][uin] = data.result.account.toString());
+				that.mod.queue.done (queueName, that.uinCache.table[gp][uin] = data.result.account.toString());
+				that.cacheSave ('uinCache');
 			} else {
 				that.log.error ('Fetch num error:', data, '(' + queueName + ')');
 				that.mod.queue.unlock (queueName);
@@ -346,11 +386,10 @@ CoreBot.prototype = {
 		
 		var queueName = 'qGetRealFriendNum';
 		if (that.mod.queue.reg (queueName, cb)) return;
-
-		that.friendHashTable = {
-			vfAuth: that.auth.vfwebqq,
-			table: {}
-		};
+		if (this.cacheInit ('friendHashTable')) {
+			this.log.warn ('friendHashTable: Not expired yet, refuse reload hash table.');
+			return ;
+		}
 		
 		that.log.info ('Fetch real QQ Num...');
 		loopArray (that, that.friends.info, function (next, friend) {
@@ -438,20 +477,15 @@ CoreBot.prototype = {
 		});
 	},
 	
-	getAllGroupHashTable: function (cb, bForceUpd) {
+	getAllGroupHashTable: function (cb) {
 		var queueName = 'qGetAllGroupHashTable';
 		if (this.mod.queue.reg (queueName, cb)) return;
 		var that = this;
 		
-		if (!bForceUpd && this.cacheUsable('groupHashTable')) {
+		if (this.cacheInit('groupHashTable')) {
 			this.log.warn ('groupHashTable: Not expired yet, refuse reload hash table.');
 			return ;
 		}
-		
-		that.groupHashTable = {
-			vfAuth: that.auth.vfwebqq,
-			table: {}
-		};
 		
 		// 抓取群号
 		loopArray (this, this.groupList.gnamelist, function (next, group) {
@@ -527,47 +561,90 @@ CoreBot.prototype = {
 			that.mod.queue.done(queueName, ret.result);
 		});
 	},
-	sendMsg: function (isGroup, targetId, content) {
-		var that = this;
+	
+	sendMsgRetry: function (msg, targetId, content, extraArg, numTry) {
+		var isGroup = msg.isGroup;
 
 		if (!targetId) {
-			that.mod.log.msg ('[CONSOLE] Send:', content);
+			this.mod.log.msg ('[CONSOLE] Send:', content);
 			return ;
 		}
 		
-		var msgFont = that.conf.font;
-		msgFont.style = msgFont.style || [0, 0, 0];
+		if (!content) {
+			this.log.msg ('Content is empty.');
+			return ;
+		}
+		
+		var msgContent = [],
+			fixSign = false;
+		if (content.getMsg) {
+			// Advanced message
+			msgContent = content.getMsg ();
+			fixSign = content.fixSign && isGroup;
+		} else {
+			var msgFont = this.conf.font;
+			msgFont.style = msgFont.style || [0, 0, 0];
 
+			if (content instanceof Array) {
+				// If content is array, merge it.
+				msgContent.concat (content);
+			} else {
+				// Otherwise, push it as an item.
+				msgContent.push (content);
+			}
+			msgContent.push (['font', msgFont]);
+		}
+		
 		var initMsgObj = {
 			r: {
 				msg_id: Math.floor (Math.random() * 100000 + 1000),
-				clientid: that.auth.clientid.toString(),
-				psessionid: that.auth.psessionid,
-				content: JSON.stringify ([
-					content, ['font', msgFont]
-				])
+				clientid: this.auth.clientid.toString(),
+				psessionid: this.auth.psessionid,
+				content: JSON.stringify (msgContent)
 			},
-			clientid: that.auth.clientid,
-			psessionid: that.auth.psessionid
+			clientid: this.auth.clientid,
+			psessionid: this.auth.psessionid
 		};
-
+		
+		if (fixSign) {
+			joinObj(initMsgObj.r, {
+				group_code: msg.group_code,
+				key: this.auth.gface_key,
+				sig: this.auth.gface_sig
+			});
+		}
+		
 		if (isGroup) {
 			initMsgObj.r = JSON.stringify(joinObj(initMsgObj.r, {
 				group_uin: targetId
 			}));
-			that.API.post ('/channel/send_qun_msg2', initMsgObj, function (data) {
-				that.mod.log.msg ('Send G:', targetId, '(uin)', content, data);
-			}, 'd.web2.qq.com');
+			this.API.post ('/channel/send_qun_msg2', initMsgObj, function (data) {
+				this.mod.log.msg ('Send G:', targetId, '(uin)', msgContent, data);
+			}.bind(this), 'd.web2.qq.com');
 		} else {
 			initMsgObj.r = JSON.stringify(joinObj(initMsgObj.r, {
 				to: targetId,
 				face: 0
 			}));
 			
-			that.API.post ('/channel/send_buddy_msg2', initMsgObj, function (data) {
-				that.mod.log.msg ('Send F:', targetId, '(uin)', content, data);
-			}, 'd.web2.qq.com');
+			this.API.post ('/channel/send_buddy_msg2', initMsgObj, function (data) {
+				this.mod.log.msg ('Send F:', targetId, '(uin)', msgContent, data);
+				if (data.retcode == 108) {
+					// 自动重试
+					numTry --;
+					
+					if (numTry === 0) {
+						return ;
+					}
+					
+					setTimeout(this.sendMsgRetry.bind (this, msg, targetId, content, extraArg, numTry), safeDelay() * 2);
+				}
+			}.bind(this), 'd.web2.qq.com');
 		}
+	},
+	
+	sendMsg: function (msg, targetId, content, extraArg) {
+		this.sendMsgRetry.apply(this, [msg, targetId, content, extraArg, 4]);
 	},
 	getUser: function (uin, cb) {
 		var that = this;
@@ -668,10 +745,7 @@ CoreBot.prototype = {
 		}
 
 		msg.user = userData;
-		
-		this.Plugin.on('msg', msg.strMsg, msg, this.createCallback(
-			this, this.sendMsg, msg.isGroup, msg.from_gid || msg.from_uin)
-		);
+		this.Plugin.on('msg', msg.strMsg, msg, this.sendMsg.bind(this, msg, msg.from_gid || msg.from_uin));
 	},
 	
 	lastErrorPoll: function (code) {
@@ -728,28 +802,28 @@ CoreBot.prototype = {
 
 					msg.isGroup = true;
 					msg.from_gid = msg.from_uin;
-					msg.group_code = msg.group_code;
+					// msg.group_code = msg.group_code;
 					msg.from_uin = msg.send_uin;
 					msg.from_group = this.groups[msg.from_gid];
 
-					this.getUserFromGroup (msg.from_uin, msg.from_gid, false, 
-						that.createCallback(that, that.fooProcMsg, msg)
-					);
+					this.getUserFromGroup (msg.from_uin, msg.from_gid, false, that.fooProcMsg.bind (this, msg));
 					break;
+					
 				case 'message':
 					// that.log.msg (msg);
 					if (!this.friends.friends)
 						// Bot not ready.
 						return;
 
-					that.getUser (msg.from_uin, that.createCallback(that, that.fooProcMsg, msg));
+					that.getUser (msg.from_uin, that.fooProcMsg.bind (this, msg));
 					break;
+					
 				case 'sys_g_msg':
 					this.mod.log.event ('SYS ->', msg);
 					break;
+					
 				default:
 					this.mod.log.event (ret[i].poll_type, '->', msg);
-					
 					break;
 			}
 			if (bBreak) break;

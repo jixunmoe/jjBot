@@ -26,7 +26,7 @@ var mCon = new (require('./conf'))(__FLAG__.config ? __FLAG__.config.join(' ') :
 	mod  = {};
 
 /// Get absolute path to current directory.
-GLOBAL.__ROOT__ = path.resolve ('.');
+GLOBAL.__ROOT__ = path.resolve ('.') + '/';
 
 function safeName (input) {
 	return input.replace(/\.[^.]+?$/, '').replace(/^\d+\./, '').replace(/\./g, '_');
@@ -46,6 +46,7 @@ modules.forEach (function (e) {
 
 });
 mod.log.info ('Project jjBot Boot ::', new Date ());
+mod.log.info ('__ROOT__ : ' + __ROOT__);
 
 // 初始化准备…
 var initScripts = fs.readdirSync('./init.d/');

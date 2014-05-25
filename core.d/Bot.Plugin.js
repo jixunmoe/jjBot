@@ -124,7 +124,7 @@ BotPlugin.prototype = {
 
 			// Remove all auto callbacks.
 			for (var e in this.plugins[sPlugFile].events)
-				this.plugins[sPlugFile].events[e].forEach (this.bot.createCallback (this, this.rm, e));
+				this.plugins[sPlugFile].events[e].forEach (this.rm.bind (this, e));
 			
 			if (debug.event)
 				this.log.info (this.plugins[sPlugFile], require.cache[plugPath]);

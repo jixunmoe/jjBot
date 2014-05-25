@@ -1,25 +1,34 @@
 {
-	"name": "jjBot",
-	"description": "Just another Javascript Bot for webqq",
-	"version": "0.0.2",
-	"keywords": ["jjBot"],
-	"maintainers": [{
-		"name": "Jixun.Moe",
-		"email": "Jixun.Moe@gmail.com",
-		"web": "http://jixun.org/"
-	}],
-	"dependencies": {
-		"sequence": ">=3.0.0",
-		"js-yaml":  ">=3.0.2",
-		"mysql2":  ">=0.11.7"
-	},
-	"repositories": [{
-			"type": "git",
-			"url": "https://github.com/JixunMoe/jjBot.git"
-	}],
-	"licenses": [{
-		"name": "MIT",
-		"url": "https://raw.githubusercontent.com/JixunMoe/jjBot/master/LICENSE"
-	}],
-	"homepage": "https://github.com/JixunMoe/jjBot"
+  "name": "jjBot",
+  "description": "Just another Javascript Bot for webqq",
+  "version": "0.0.3",
+  "keywords": [
+    "jjBot"
+  ],
+  "maintainers": [
+    {
+      "name": "Jixun.Moe",
+      "email": "Jixun.Moe@gmail.com",
+      "web": "http://jixun.org/"
+    }
+  ],
+  "dependencies": {
+    "sequence": "~3.0.0",
+    "js-yaml": "~3.0.2",
+    "mysql2": "~0.11.7",
+    "form-data": "~0.1.2"
+  },
+  "repositories": [
+    {
+      "type": "git",
+      "url": "https://github.com/JixunMoe/jjBot.git"
+    }
+  ],
+  "licenses": [
+    {
+      "name": "MIT",
+      "url": "https://raw.githubusercontent.com/JixunMoe/jjBot/master/LICENSE"
+    }
+  ],
+  "homepage": "https://github.com/JixunMoe/jjBot"
 }

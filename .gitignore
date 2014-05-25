@@ -3,6 +3,7 @@ test-*
 .sublime-*
 *.sublime-*
 config.*
+img.d/*
 
 # Logs
 logs
