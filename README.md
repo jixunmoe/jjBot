@@ -27,7 +27,8 @@
 * 将 `config-sample.yaml` 拷贝一份到 `config.yaml`, 按照注释填写即可。
 * 配置完后就可以执行 `node Boot.js` 执行机器人了~
 * **注意**: 如果您不需要用户管理系统 (MySQL 数据库)，可以删除 `mod.d/1.db.js` 以及 `plug.d/07.uc.js` 档案。MySQL 用户需要创建数据库、表格的权限，或已经配置完毕数据库。
-* 新版使用 form-data 提交图片数据，但是 0.1.2 有问题! 请在项目目录执行```bash
+* 新版使用 form-data 提交图片数据，但是 0.1.2 有问题! 请在项目目录执行
+```bash
 curl https://raw.githubusercontent.com/felixge/node-form-data/master/lib/form_data.js -o node_modules/form-data/lib/form_data.js
 ```
 升级插件到最新版后执行机器人。
