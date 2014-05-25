@@ -132,18 +132,14 @@ BotAPI.prototype = {
 		if (__FLAG__.offline) return cb ({ retcode: 998, msg: 'offline mode', result: {account: '123456'} });
 		
 		var form = new Form();
-		for (var i=0; i<data.length; i++) {
+		for (var i=0; i<data.length; i++)
 			form.append.apply (form, data[i]);
-			// form.append (data[i][0], data[i][1], data[i][1]);
-		}
 		
 		return form.submit ({
 			host: host || uploadHost,
 			path: path,
 			port: 80,
 			headers: {
-				// 'Content-Type': 'application/x-www-form-urlencoded',
-				// 'Content-Length': Buffer.byteLength(postData),
 				Cookie: this.bot.auth.cookie,
 				Referer: 'http://up.web2.qq.com/',
 				'User-Agent': this.bot.conf.userAgent

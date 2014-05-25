@@ -9,13 +9,13 @@ var pluginTestFoo = function (Bot, regEvent) {
 };
 
 pluginTestFoo.prototype = {
-	name  : '测试图片上传',
+	name  : '图片分享',
 	ver   : '1.0',
 	author: 'Jixun',
-	desc  : '测试用',
+	desc  : '<jj/img 图片名> 图片后缀必须为「.jpg」(Linux 请确保大小写正确)',
 	load: function () {
-		this.regEvent ('msg-cmd-imgtest', function (reply, msg, args, fileName) {
-			var targetImg = fileName || '10313813_1594437097448864_6148191449117996619_n';
+		this.regEvent ('msg-cmd-img', function (reply, msg, args, fileName) {
+			var targetImg = fileName || 'default';
 			
 			if (!fs.existsSync (__ROOT__ + 'img.d/' + targetImg + '.jpg'))
 				return ;
@@ -23,8 +23,9 @@ pluginTestFoo.prototype = {
 			this.bot.Chat.uploadFace (__ROOT__ + 'img.d/' + targetImg + '.jpg', function (fileHash) {
 				// this.bot.log.info ('upload done, file hash:', fileHash);
 
-				var advChat = new this.bot.Chat.Builder (true);
+				var advChat = new this.bot.Chat.Builder (msg.isGroup);
 				advChat.addImg (fileHash);
+				// advChat.addStr ('xD > ' + targetImg);
 				
 				reply (advChat);
 			}.bind(this));

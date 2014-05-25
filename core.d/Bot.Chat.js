@@ -63,7 +63,7 @@ BotChat.prototype = {
 				if (this.isGroup) msgArr.splice (1, 0, 'group');
 
 				this.msg.push (msgArr);
-				this.msg.push ('');
+				this.msg.push (Math.random().toString().slice(5,2));
 				
 				// 因为加了图片，所以需要修正签名
 				this.fixSign = true;
@@ -87,6 +87,13 @@ BotChat.prototype = {
 	uploadFace: function (filePath, cb) {
 		// http://up.web2.qq.com/cgi-bin/cface_upload
 		// * 全 Cookie
+		
+		var fileSize = fs.statSync (filePath).size;
+		if (fileSize > 1258291) {
+			// 图片过大 (官方设定)
+			this.bot.log.warn ('Image too big:', fileSize, 'Bytes, required <= 1.2MB');
+			return false;
+		}
 		
 		var fileCheckHash = fs.createReadStream(filePath);
 		var hash = crypto.createHash('md5');
@@ -122,6 +129,9 @@ BotChat.prototype = {
 				['f', 'EQQ.View.ChatBox.uploadCustomFaceCallback'],
 				['vfwebqq', this.bot.auth.vfwebqq]
 			], function (data) {
+				if (debug.api)
+					this.bot.log.info (data);
+				
 				this.history.push (fileHash);
 				this.saveHistory ();
 				

@@ -219,7 +219,7 @@ CoreBot.prototype = {
 		}, function (data) {
 			that.parsePoll (data);
 			clearTimeout (that.pollTimeThd);
-			that.pollTimeThd = setTimeout(function () { that.doPollLoop.apply (that); }, 400);
+			that.pollTimeThd = setTimeout(function () { that.doPollLoop.apply (that); }, safeDelay());
 		}, 'd.web2.qq.com').on('socket', function (s) {
 			// 2mins timeout
 			s.setTimeout(120000, function () {
@@ -228,7 +228,7 @@ CoreBot.prototype = {
 				clearTimeout (that.pollTimeThd);
 				
 				// Create new thread.
-				that.pollTimeThd = setTimeout(function () { that.doPollLoop.apply (that); }, 400);
+				that.pollTimeThd = setTimeout(function () { that.doPollLoop.apply (that); }, safeDelay());
 			});
 		});
 	},
@@ -255,6 +255,7 @@ CoreBot.prototype = {
 	},
 	
 	loginDone: function (bDontSaveConf) {
+		this.Auth.getGroupFaceSign ();
 		this.mod.log.info ('loginDone, Begin poll.');
 		
 		if (__FLAG__.offline) {
@@ -561,7 +562,7 @@ CoreBot.prototype = {
 			that.mod.queue.done(queueName, ret.result);
 		});
 	},
-	
+
 	sendMsgRetry: function (msg, targetId, content, extraArg, numTry) {
 		var isGroup = msg.isGroup;
 
@@ -618,33 +619,35 @@ CoreBot.prototype = {
 			initMsgObj.r = JSON.stringify(joinObj(initMsgObj.r, {
 				group_uin: targetId
 			}));
-			this.API.post ('/channel/send_qun_msg2', initMsgObj, function (data) {
-				this.mod.log.msg ('Send G:', targetId, '(uin)', msgContent, data);
-			}.bind(this), 'd.web2.qq.com');
 		} else {
 			initMsgObj.r = JSON.stringify(joinObj(initMsgObj.r, {
 				to: targetId,
 				face: 0
 			}));
-			
-			this.API.post ('/channel/send_buddy_msg2', initMsgObj, function (data) {
-				this.mod.log.msg ('Send F:', targetId, '(uin)', msgContent, data);
-				if (data.retcode == 108) {
-					// 自动重试
-					numTry --;
-					
-					if (numTry === 0) {
-						return ;
-					}
-					
-					setTimeout(this.sendMsgRetry.bind (this, msg, targetId, content, extraArg, numTry), safeDelay() * 2);
-				}
-			}.bind(this), 'd.web2.qq.com');
 		}
+		
+		this.API.post ('/channel/send_qun_msg2', initMsgObj, function (data) {
+			this.mod.log.msg ('Send', isGroup ? 'G' : 'F', ':', targetId, '(uin)',
+							  msgContent,
+							  debug.sendFail ? data : ''
+							 );
+			
+			if (data.retcode == 108) {
+				// 自动重试
+				numTry --;
+
+				if (numTry === 0)
+					return ;
+
+				if (debug.sendFail)
+					this.mod.log.warn ('Will retry send this message.');
+				setTimeout(this.sendMsgRetry.bind (this, msg, targetId, content, extraArg, numTry), safeDelay() + 700);
+			}
+		}.bind(this), 'd.web2.qq.com');
 	},
 	
 	sendMsg: function (msg, targetId, content, extraArg) {
-		this.sendMsgRetry.apply(this, [msg, targetId, content, extraArg, 4]);
+		this.sendMsgRetry.apply(this, [msg, targetId, content, extraArg, 9]);
 	},
 	getUser: function (uin, cb) {
 		var that = this;

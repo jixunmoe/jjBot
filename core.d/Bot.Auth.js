@@ -267,9 +267,6 @@ BotAuth.prototype = {
 				that.conf.vfwebqq    = loginInfo.result.vfwebqq;
 				that.conf.psessionid = loginInfo.result.psessionid;
 				
-				// Get face key: Not required, so we're just going to do it async.
-				that.getGroupFaceSign ();
-				
 				process.nextTick(that.bot.loginDone.bind(that.bot));
 			})).end (postData);
 		}, function (r) {
@@ -302,11 +299,10 @@ BotAuth.prototype = {
 			that.conf.gface_sig = gSign.result.gface_sig;
 			
 			that.bot.saveAuth ();
-			
 			that.bot.log.info ('Fetch Group Face Sig finish!');
 		})).on ('error', function (e) {
 			that.bot.log.error ('[LOGIN-GET-FACE-SIGN]', e);
-			process.exit (15);
+			// process.exit (15);
 		});
 	}
 };
