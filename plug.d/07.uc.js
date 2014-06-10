@@ -195,7 +195,7 @@ pluginUserCenter.prototype = {
 		that.regEvent ('msg-cmd-top', function (reply, msg, nicks) {
 			that.getUser (msg.from_uin, function (user) {
 				if (!can(user, 'talk', true)) return ;
-				if (!can(user, 'money-top', true)) return ;
+				if (!can(user, 'money-top', false)) return ;
 				
 				that.db.query ('select `dMoneyLeft`,`userNick` from `jB_user` order by dMoneyLeft desc limit 5', function (err, data) {
 					for (var i=0, rankNum = 1, rd = [that.bot.conf.user.currency + '排行如下:'], lastMoney = 0; i<data.length; i++) {

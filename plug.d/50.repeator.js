@@ -16,11 +16,14 @@ pluginRepeator.prototype = {
 		
 		// 安裝 Hook
 		this.regEvent ('msg', function (strMsg, msg, reply) {
+			if (!strMsg) return ;
+			
 			var repCount = that.repeatCache[strMsg];
 			if (repCount) {
-				repCount = ++that.repeatCache[strMsg];
+				++that.repeatCache[strMsg];
+				
 				if (repCount == 3 && Math.random () > 0.4)
-					reply (strMsg + ' [復讀]');
+					reply (strMsg + '[跟风]');
 			} else {
 				that.repeatCache[strMsg] = 1;
 

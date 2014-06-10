@@ -738,6 +738,7 @@ CoreBot.prototype = {
 		msg.strMsg = msg.content.map(function (e) {
 			if ('string' == typeof e)
 				return e;
+			
 			return '[图片]';
 		}).join(' ');
 

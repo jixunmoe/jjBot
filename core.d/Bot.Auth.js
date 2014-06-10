@@ -86,7 +86,7 @@ var BotAuth = function (Bot) {
 		that.conf.cookie = r.headers['set-cookie'];
 
 		var json = parseCallback (body);
-		if (3 != json.length) throw new Error ('Unable to fetch VFCODE status: ' + body);
+		if (3 != json.length && 4 != json.length) throw new Error ('Unable to fetch VFCODE status: ' + body);
 		log.info ('vf-status:', json);
 		that.checkVFCode (parseInt (json[0]), json[1], json[2]);
 	}, function (r) {
@@ -199,7 +199,7 @@ BotAuth.prototype = {
 							'&verifycode=' + that.conf.vfCode + 
 							'&webqq_type=10&remember_uin=1&login2qq=1&aid=1003903&u1=http%3A%2F%2Fweb2.qq.com%2Floginproxy.html%3Flogin2qq%3D1%26webqq_type%3D10&h=1&ptredirect=0&ptlang=2052&daid=164&from_ui=1&pttype=1&dumy=&fp=loginerroralert&action=' + 
 							that.ranActionCode () +
-							'&mibao_css=m_webqq&t=1&g=1&js_type=0&js_ver=10062&login_sig=' + newSig,
+							'&mibao_css=m_webqq&t=1&g=1&js_type=0&js_ver=10080&pt_uistyle=5&pttype=1&login_sig=' + newSig,
 					headers: { Cookie: that.conf.cookie }
 				}, onDataCallback(function (data, r) {
 					var ptuiCB = parseCallback(data);
