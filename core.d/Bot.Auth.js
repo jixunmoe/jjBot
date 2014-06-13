@@ -36,6 +36,35 @@ function parseCallback (input) {
 	return ret;
 }
 
+function hash_func (uin, ptwebqq) {
+	var encStr = ptwebqq + "password error",
+		i = '',
+		E = [];
+
+	while (true) {
+		if (i.length <= encStr.length) {
+			i += uin;
+
+			if (i.length == encStr.length)
+				break;
+		} else {
+			i = i.slice(0, encStr.length);
+			break;
+		}
+	}
+
+	for (var c = 0; c < i.length; c++)
+		E[c] = i.charCodeAt(c) ^ encStr.charCodeAt(c);
+
+	var hashTable = '0123456789ABCDEF'.split(''),
+		retHash = "";
+
+	for (c = 0; c < E.length; c++)
+		retHash += hashTable[E[c] >> 4 & 15] + hashTable[E[c] & 15];
+	
+	return retHash;
+}
+
 var BotAuth = function (Bot) {
 	var that = this,
 		log = Bot.mod.log;
@@ -68,6 +97,7 @@ var BotAuth = function (Bot) {
 		vfwebqq: '',
 		gface_key: '',
 		gface_sig: '',
+		hash: '',
 		clientid: Math.floor (97500000 + Math.random() * 99999) + ''
 	};
 
@@ -267,6 +297,8 @@ BotAuth.prototype = {
 				that.conf.vfwebqq    = loginInfo.result.vfwebqq;
 				that.conf.psessionid = loginInfo.result.psessionid;
 				
+				that.conf.hash = hash_func (that.conf.uin, that.conf.ptwebqq);
+			
 				process.nextTick(that.bot.loginDone.bind(that.bot));
 			})).end (postData);
 		}, function (r) {

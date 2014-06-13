@@ -99,76 +99,6 @@ var CoreBot = function (conf, mod, mConf) {
 	this.Plugin.init ();
 };
 
-function hash_func (uin, ptwebqq) {
-	var HashKeyStruct = function (s, e) {
-		this.s = s || 0;
-		this.e = e || 0;
-	};
-	
-	var uinByte = [
-		uin >> 24 & 255,
-		uin >> 16 & 255,
-		uin >> 8 & 255,
-		uin & 255
-	];
-
-	var pwWebChar = ptwebqq.split ('').map (function (c) {
-		return c.charCodeAt(0);
-	});
-
-	var unknownArray = [new HashKeyStruct(0, pwWebChar.length - 1)];
-	
-	for (;unknownArray.length;) {
-		var lastItem = unknownArray.pop();
-		
-		if (!(lastItem.s >= lastItem.e || lastItem.s < 0 || lastItem.e >= pwWebChar.length)){
-			if (lastItem.s + 1 == lastItem.e) {
-				// Swap
-				if (pwWebChar[lastItem.s] > pwWebChar[lastItem.e]) {
-					var tmp = pwWebChar[lastItem.s];
-					pwWebChar[lastItem.s] = pwWebChar[lastItem.e];
-					pwWebChar[lastItem.e] = tmp;
-				}
-			} else {
-				var sBit = lastItem.s,
-					eBit = lastItem.e,
-					f = pwWebChar[lastItem.s];
-				
-				for (; lastItem.s < lastItem.e;) {
-					for (; lastItem.s < lastItem.e && pwWebChar[lastItem.e] >= f; lastItem.e--) {
-						uinByte[0] = uinByte[0] + 3 & 255;
-					}
-					
-					if (lastItem.s < lastItem.e) {
-						pwWebChar[lastItem.s] = pwWebChar[lastItem.e];
-						lastItem.s++;
-						uinByte[1] = uinByte[1] * 13 + 43 & 255;
-					}
-					
-					for (; lastItem.s < lastItem.e && pwWebChar[lastItem.s] <= f; lastItem.s++) {
-						uinByte[2] = uinByte[2] - 3 & 255;
-					}
-					
-					if (lastItem.s < lastItem.e) {
-						pwWebChar[lastItem.e] = pwWebChar[lastItem.s];
-						lastItem.e--;
-						uinByte[3] = (uinByte[0] ^ uinByte[1] ^ uinByte[2] ^ uinByte[3] + 1) & 255;
-					}
-				}
-				pwWebChar[lastItem.s] = f;
-				unknownArray.push(new HashKeyStruct(sBit, lastItem.s - 1));
-				unknownArray.push(new HashKeyStruct(lastItem.s + 1, eBit));
-			}
-		}
-	}
-	var hexTable = '0123456789ABCDEF'.split('');
-	var retKey = "";
-	for (var i = 0; i < uinByte.length; i++) {
-		retKey += hexTable[uinByte[i] >> 4 & 15] + hexTable[uinByte[i] & 15];
-	}
-	return retKey;
-}
-
 function joinObj (def) {
 	for (var i=0; i<arguments.length; i++)
 		for (var x in arguments[i])
@@ -423,12 +353,12 @@ CoreBot.prototype = {
 		that.API.post ('/api/get_user_friends2', {
 			r: JSON.stringify ({
 				h: 'hello',
-				hash: hash_func (that.auth.uin, that.auth.ptwebqq),
+				hash: this.auth.hash,
 				vfwebqq: that.auth.vfwebqq
 			})
 		}, function (ret) {
 			if (ret.retcode == 50) {
-				that.log.error ('Fetch friend list(50): ptWebQQ expired, reboot jjBot without --shareLogin.');
+				that.log.error ('Fetch friend list(50): ptWebQQ expired or hash_func updated, try reboot jjBot without --shareLogin.');
 				// process.exit (11);
 			} else if (ret.retcode) {
 				that.log.error ('Fetch friend list error:', ret);
@@ -460,6 +390,7 @@ CoreBot.prototype = {
 		
 		that.API.post ('/api/get_group_name_list_mask2', {
 			r: JSON.stringify ({
+				hash: this.auth.hash,
 				vfwebqq: this.auth.vfwebqq
 			})
 		}, function (ret) {
@@ -472,6 +403,7 @@ CoreBot.prototype = {
 				that.groupList = ret.result;
 				that.groupList.vfAuth = that.auth.vfwebqq;
 				that.mod.cache.save('groupList', that.groupList);
+				
 				that.getAllGroupInfo ();
 				that.mod.queue.done (queueName, that.groupList);
 			}
@@ -508,14 +440,14 @@ CoreBot.prototype = {
 		var queueName = 'qGetAllGroupInfo';
 		if (this.mod.queue.reg (queueName, cb)) return;
 		
-		this.log.info ('Fetch all group info...');
-		
+		this.log.info ('Fetch group list...');
 		// 抓取群组数据
 		loopArray (this, this.groupList.gnamelist, function (next, group) {
 			this.getGroupInfo (group.code.toString(), false, delayFunction(this, next));
 		}, function () {
 			this.getAllGroupHashTable ();
 			this.mod.queue.done(queueName);
+			this.log.info ('Fetch group list done! Now searching for real id..');
 		});
 	},
 	getGroupInfo: function (gcode, bIgnoreCache, cb, numTry) {
