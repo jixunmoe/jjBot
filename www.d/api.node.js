@@ -29,7 +29,8 @@ switch ($_GET.action) {
 				
 				groupList.forEach (function (gid) {
 					// console.log (gid);
-					Bot.sendMsg (true, gid, $_POST.msg);
+					// msg, targetId, content, extraArg
+					Bot.sendMsg ({ isGroup: true }, gid, $_POST.msg);
 				});
 			} catch (e) {
 				ret.error = e.toString() + '\n' + e.stack;

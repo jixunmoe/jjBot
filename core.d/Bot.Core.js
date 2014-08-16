@@ -540,6 +540,10 @@ CoreBot.prototype = {
 		};
 		
 		if (fixSign) {
+			if (!msg.group_code) {
+				this.log.err ('fixSign requires `group_code` attribute.');
+				return ;
+			}
 			joinObj(initMsgObj.r, {
 				group_code: msg.group_code,
 				key: this.auth.gface_key,

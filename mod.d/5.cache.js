@@ -1,3 +1,5 @@
+/* jslint node:true */
+/* global debug */
 var fs = require ('fs');
 
 var mCache = function (conf, mod) {
