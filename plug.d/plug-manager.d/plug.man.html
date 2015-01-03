@@ -54,7 +54,7 @@
 			<td>{{plug.name}}
 				<span class="label label-danger" ng-if="plug.blacklist">黑名单</span></td>
 			<td>
-				<button class="btn btn-default btn-sm" ng-click="rlPlug(plug)" ng-if="!plug.blacklist">
+				<button class="btn btn-default btn-sm" ng-click="rlPlug(plug.file)" ng-if="!plug.blacklist">
 					<span class="glyphicon glyphicon-plus"></span> 啓用
 				</button>
 			</td>

@@ -57,7 +57,7 @@ pluginReloadAll.prototype = {
 			} : function (file) {
 				that.bot.Plugin.loadPlugin (file, true);
 			};
-			
+
 			for (var x in $_POST.files)
 				cb ($_POST.files[x]);
 			

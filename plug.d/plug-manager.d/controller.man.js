@@ -5,11 +5,11 @@
 
 $scope.clickRow = function (e) {
 	var cb = $(e.target).parent('tr').find('input:checkbox');
-	cb.prop ('checked', !cb[0].checked);
+	if (cb.length) cb.prop ('checked', !cb[0].checked);
 };
 
 // ----------------------
-$scope.rmPlug = function (plugFile) {
+$scope.rmPlug = function () {
 	$http.post('/plug.api?a=jx-man-plug', {
 		rm: true,
 		files: arguments
@@ -22,7 +22,7 @@ $scope.rmPlugs = function () {
 };
 
 // ----------------------
-$scope.rlPlug = function (plugFile) {
+$scope.rlPlug = function () {
 	$http.post('/plug.api?a=jx-man-plug', {
 		files: arguments
 	}).success($scope.reloadPlugList);
