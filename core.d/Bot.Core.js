@@ -185,9 +185,6 @@ CoreBot.prototype = {
 	},
 	
 	loginDone: function (bDontSaveConf) {
-		this.Auth.getGroupFaceSign ();
-		this.mod.log.info ('loginDone, Begin poll.');
-		
 		if (__FLAG__.offline) {
 			this.mod.log.warn ('Offline mode, using data from CACHE!');
 			this.friends = this.mod.cache.load ('friendInfo');
@@ -201,6 +198,8 @@ CoreBot.prototype = {
 			};
 			return;
 		}
+		this.Auth.getGroupFaceSign ();
+		this.mod.log.info ('loginDone, Begin poll.');
 		
 		// 简写
 		this.auth = this.Auth.conf;
