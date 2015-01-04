@@ -85,6 +85,10 @@ BotChat.prototype = {
 	},
 	
 	uploadFace: function (filePath, cb) {
+		// 腾讯的服务器关了, 图片上传不了了
+		process.nextTick (cb.bind({}, new Error('腾讯网页QQ服务器已关闭上传')));
+		return ;
+
 		// http://up.web2.qq.com/cgi-bin/cface_upload
 		// * 全 Cookie
 		

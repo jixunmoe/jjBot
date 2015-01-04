@@ -567,8 +567,10 @@ CoreBot.prototype = {
 				face: 0
 			}));
 		}
+
+		var apiMsg = '/channel/' + (isGroup ? 'send_qun_msg2' : 'send_buddy_msg2');
 		
-		this.API.post ('/channel/send_qun_msg2', initMsgObj, function (data) {
+		this.API.post (apiMsg, initMsgObj, function (data) {
 			this.mod.log.msg ('Send', isGroup ? 'G' : 'F', ':', targetId, '(uin)',
 							  msgContent,
 							  debug.sendFail ? data : ''
