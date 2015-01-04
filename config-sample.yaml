@@ -8,6 +8,9 @@ maxRetry: 3
 qqnum:  '10000'
 passwd: 'Your Password'
 
+# Seconds to wait before process messages.
+bootWait: 20
+
 # Spec. Path for your file/directorys.
 logPath:  './jjBot.log'
 webPath:  './www.d/'
@@ -22,7 +25,7 @@ port: 2333
 cmdPrefix: 'jj'
 
 # User Agent to be used to communicate with tx's server.
-userAgent: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/33.0.1750.152 Chrome/33.0.1750.152 Safari/537.36'
+userAgent: 'Mozilla/5.0 (compatible; MSIE 8.0; Windows NT 5.1; SLCC1; .NET CLR 1.1.4322)'
 
 # TODO: Ignore people's message
 ban:
@@ -32,8 +35,8 @@ ban:
 # Message font config
 font:
     colour: 'ff6600'
-    size:   10
-    name:   'Microsoft YaHei UI'
+    size:   9
+    name:   '宋体'
 
 # Login info for web server
 web:

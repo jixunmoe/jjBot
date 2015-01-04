@@ -92,6 +92,7 @@ var CoreBot = function (conf, mod, mConf) {
 	this.conf = conf;
 	this.mod = mod;
 	this.log = mod.log;
+	this.bootWait = true;
 	this.Looper = BotLooper;
 	this.API = new BotAPI (this);
 	this.Chat = new BotChat (this);
@@ -165,6 +166,9 @@ CoreBot.prototype = {
 		});
 	},
 	saveAuth: function () {
+		setTimeout(function (self) {
+			self.bootWait = false;
+		}, this.conf.bootWait * 1000, this);
 		this.mod.cache.save ('authLogin', this.auth);
 	},
 	
@@ -188,6 +192,7 @@ CoreBot.prototype = {
 	
 	loginDone: function (bDontSaveConf) {
 		if (__FLAG__.offline) {
+			this.bootWait = false;
 			this.mod.log.warn ('Offline mode, using data from CACHE!');
 			this.friends = this.mod.cache.load ('friendInfo');
 			this.groupList = this.mod.cache.load ('groupList');
@@ -736,6 +741,9 @@ CoreBot.prototype = {
 					process.exit(10);
 					break;
 				case 'group_message':
+					if (this.bootWait)
+						return ;
+
 					// that.log.msg (msg);
 					if (!this.groupList.gnamelist)
 						// Bot not ready.
@@ -751,6 +759,9 @@ CoreBot.prototype = {
 					break;
 					
 				case 'message':
+					if (this.bootWait)
+						return ;
+
 					// that.log.msg (msg);
 					if (!this.friends.friends)
 						// Bot not ready.
