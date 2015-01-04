@@ -14,7 +14,7 @@ pluginHello.prototype = {
 		var that = this;
 		
 		// 安裝 Hook
-		this.regEvent ('msg-cmd-uptime', function (reply) {
+		this.regEvent ('msg-cmd-uptime', function (next, reply) {
 			var secs = (new Date() - that.bot.mod.boot.time) / 1000;
 			reply ('这次欢快的跑了 ' + Math.floor(secs % 86400 / 3600) + '时 ' + Math.floor(secs % 3600 / 60) + '分钟呢~');
 		});

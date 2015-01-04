@@ -58,10 +58,8 @@ IntervalLoop.prototype = {
 	},
 	cleanup: function (bForce) {
 		if (bForce || this.status == 2) {
-			// 已经用过的数据就清掉。
-			// this.data.splice(0, this.index);
-			delete this.data;
-			this.data = [];
+			// 已经用过的数据就清掉。Check vfcode...
+			this.data.splice(0, this.index);
 
 			this.index = 0;
 			this.status = 0;

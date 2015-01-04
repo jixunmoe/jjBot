@@ -94,6 +94,8 @@ var CoreBot = function (conf, mod, mConf) {
 	this.log = mod.log;
 	this.bootWait = true;
 	this.Looper = BotLooper;
+	this.msgPipe = new BotLooper([], this._sendMsg.bind(this), conf.msgInterval);
+	this.msgPipe.loop();
 	this.API = new BotAPI (this);
 	this.Chat = new BotChat (this);
 	this.Auth = new BotAuth (this);
@@ -501,7 +503,13 @@ CoreBot.prototype = {
 		});
 	},
 
-	sendMsgRetry: function (msg, targetId, content, extraArg, numTry) {
+	_sendMsg: function (next, args) {
+		// msg, targetId, content, extraArg
+		var msg 		= args.shift(),
+			targetId 	= args.shift(),
+			content 	= args.shift(),
+			extraArg 	= args.shift();
+
 		var isGroup = msg.isGroup;
 
 		if (!targetId) {
@@ -575,23 +583,12 @@ CoreBot.prototype = {
 							  msgContent,
 							  debug.sendFail ? data : ''
 							 );
-			
-			if (data.retcode == 108) {
-				// 自动重试
-				numTry --;
-
-				if (numTry === 0)
-					return ;
-
-				if (debug.sendFail)
-					this.mod.log.warn ('Will retry send this message.');
-				setTimeout(this.sendMsgRetry.bind (this, msg, targetId, content, extraArg, numTry), safeDelay() + 700);
-			}
+			next ();
 		}.bind(this), 'd.web2.qq.com');
 	},
 	
 	sendMsg: function (msg, targetId, content, extraArg) {
-		this.sendMsgRetry.apply(this, [msg, targetId, content, extraArg, 9]);
+		this.msgPipe.add([msg, targetId, content, extraArg]);
 	},
 	getUser: function (uin, cb) {
 		var that = this;

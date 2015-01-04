@@ -12,7 +12,7 @@ pluginHello.prototype = {
 	desc  : '回应指令 Ping, 演示用插件',
 	load: function () {
 		// 安裝 Hook
-		this.regEvent ('msg-cmd-ping', function (reply) {
+		this.regEvent ('msg-cmd-ping', function (next, reply) {
 			reply ('Pong!');
 		});
 	},

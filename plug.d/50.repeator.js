@@ -15,7 +15,7 @@ pluginRepeator.prototype = {
 		var that = this;
 		
 		// 安裝 Hook
-		this.regEvent ('msg', function (strMsg, msg, reply) {
+		this.regEvent ('msg', function (next, strMsg, msg, reply) {
 			if (!strMsg) return ;
 			
 			var repCount = that.repeatCache[strMsg];

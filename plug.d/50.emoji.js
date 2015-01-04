@@ -14,7 +14,7 @@ pluginEmoji.prototype = {
 		var that = this;
 		
 		// 安裝 Hook
-		this.regEvent ('msg', function (strMsg, msg, reply) {
+		this.regEvent ('msg', function (next, strMsg, msg, reply) {
 			if (Math.random() > 0.3) {
 				var pMsg = strMsg.trim();
 				

@@ -11,7 +11,7 @@ pluginTime.prototype = {
 	author: 'Jixun',
 	desc  : '回应指令 time',
 	load: function () {
-		this.regEvent ('msg-cmd-time', function (reply, msg, args) {
+		this.regEvent ('msg-cmd-time', function (next, reply, msg, args) {
 			return reply('当前服务器时间: ' + new Date());
 		});
 	},

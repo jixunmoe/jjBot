@@ -12,7 +12,7 @@ pluginHello.prototype = {
 	desc  : '没什么, 弄着玩的',
 	load: function () {
 		// 安裝 Hook
-		this.regEvent ('msg-cmd-fly', function (reply) {
+		this.regEvent ('msg-cmd-fly', function (next, reply) {
 			reply ('jj fly~');
 		});
 	},

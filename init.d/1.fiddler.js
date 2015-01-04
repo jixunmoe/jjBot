@@ -36,7 +36,13 @@ var fidHook = function (mod) {
 	});
 
 	s.setTimeout(500, function() { s.destroy(); });
-
+/*
+	var reqBak = http.request;
+	http.request = function (reqObj) {
+		console.info ('%s%s', reqObj.host, reqObj.path || reqObj.pathname);
+		return reqBak.apply(this, arguments);
+	};
+*/
 };
 
 module.exports = function (mod) {
