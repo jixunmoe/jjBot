@@ -32,8 +32,7 @@ var modDB = function (conf, mod) {
 	this.db.on ('error', __errorHandler);
 	
 	
-	this.db.query (_('create database if not exists `%s` DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci; use `%s`;',
-						conf.mysql.database, conf.mysql.database));
+	this.db.query (_('create database if not exists `%s` DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci; use `%s`;', conf.mysql.database, conf.mysql.database));
 };
 
 module.exports = function (conf, mod) {
