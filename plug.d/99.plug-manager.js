@@ -4,9 +4,8 @@
 var  fs  = require ('fs'),
 	path = require('path');
 
-var pluginReloadAll = function (Bot, regEvent) {
-	this.bot = Bot;
-	this.regEvent = regEvent;
+var pluginReloadAll = function () {
+	this.plugDir = __dirname + '/plug-manager.d/';
 };
 
 pluginReloadAll.prototype = {
@@ -15,9 +14,9 @@ pluginReloadAll.prototype = {
 	ver   : '1.0',
 	desc  : '提供网页前端的插件管理界面。禁用後無法繼續操作了哦。',
 	load: function () {
-		var that = this;
+		var self = this;
 		// 安裝 Hook
-		that.regEvent ('web-plug-list', function () {
+		self.regEvent ('web-plug-list-sync', function () {
 			return [{
 				// 首先弄一個分隔符
 				type: 1
@@ -30,44 +29,44 @@ pluginReloadAll.prototype = {
 			}];
 		});
 
-		that.regEvent('web-plug-res-jx-man-plug',   function () {
-			return that.resManPlugPage || (that.resManPlugPage = fs.readFileSync (__dirname + '/plug-manager.d/plug.man.html' ));
+		self.regEvent('web-plug-res-jx-man-plug',   function (next, data) {
+			data.data = self.getFile('plug.man.html');
 		});
-		that.regEvent('web-plug-res-jx-man-plug-c', function () {
-			return that.resManPlugCont || (that.resManPlugCont = fs.readFileSync (__dirname + '/plug-manager.d/controller.man.js'));
-		});
-
-		that.regEvent('web-plug-res-jx-reload-all',   function () {
-			return that.resReloadPage || (that.resReloadPage = fs.readFileSync (__dirname + '/plug-manager.d/confirm.html' ));
-		});
-		that.regEvent('web-plug-res-jx-reload-all-c', function () {
-			return that.resReloadCont || (that.resReloadCont = fs.readFileSync (__dirname + '/plug-manager.d/controller.js'));
+		self.regEvent('web-plug-res-jx-man-plug-c', function (next, data) {
+			data.data = self.getFile('controller.man.js');
 		});
 
-		that.regEvent('web-plug-api-jx-reload-all', function () {
+		self.regEvent('web-plug-res-jx-reload-all',   function (next, data) {
+			data.data = self.getFile('confirm.html');
+		});
+		self.regEvent('web-plug-res-jx-reload-all-c', function (next, data) {
+			data.data = self.getFile('controller.js');
+		});
+
+		self.regEvent('web-plug-api-jx-reload-all', function () {
 			// Reload all the plugins.
-			that.bot.Plugin.init (true);
+			self.bot.Plugin.init (true);
 		});
-		that.regEvent('web-plug-api-jx-mem-usage', function () {
-			return process.memoryUsage();
+		self.regEvent('web-plug-api-jx-mem-usage', function (next, data) {
+			data.data = process.memoryUsage();
 		});
-		that.regEvent('web-plug-api-jx-man-plug', function ($_GET, $_POST) {
+		self.regEvent('web-plug-api-jx-man-plug', function (next, data, $_GET, $_POST) {
 			var cb = $_POST.rm ? function (file) {
-				that.bot.Plugin.unloadPlugin (file);
+				self.bot.Plugin.unloadPlugin (file);
 			} : function (file) {
-				that.bot.Plugin.loadPlugin (file, true);
+				self.bot.Plugin.loadPlugin (file, true);
 			};
 
 			for (var x in $_POST.files)
 				cb ($_POST.files[x]);
 			
-			return { err: 0 };
+			data.data = { err: 0 };
 		});
-		that.regEvent('web-plug-api-jx-plug-list', function () {
-			// console.log (that.bot.Plugin.plugins);
+		self.regEvent('web-plug-api-jx-plug-list', function (next, data) {
+			// console.log (self.bot.Plugin.plugins);
 			var ret = [];
 			var plugNames = [];
-			var plugs = that.bot.Plugin.plugins, plug;
+			var plugs = self.bot.Plugin.plugins, plug;
 			for (var x in plugs) {
 				plugNames.push (x);
 				plug = plugs[x];
@@ -80,27 +79,26 @@ pluginReloadAll.prototype = {
 					file: x
 				});
 			}
-			var realPath = path.resolve(__ROOT__, this.bot.conf.plugPath) + '/';
-			var allPlugs = fs.readdirSync(this.bot.conf.plugPath);
+			var realPath = path.resolve(__ROOT__, self.bot.conf.plugPath) + '/';
+			var allPlugs = fs.readdirSync(self.bot.conf.plugPath);
 			var unLoadedPlugs = [];
 			for(var i=0; i<allPlugs.length; i++) {
 				if (plugNames.indexOf(allPlugs[i]) == -1 && !fs.lstatSync(realPath + allPlugs[i]).isDirectory()) {
 					unLoadedPlugs.push({
 						name: allPlugs[i],
-						blacklist: that.bot.Plugin.isBlacklist(allPlugs[i])
+						blacklist: self.bot.Plugin.isBlacklist(allPlugs[i])
 					});
 				}
 			}
 			
-			return {
+			data.data = {
 				active: ret,
 				disabled: unLoadedPlugs
 			};
 		});
 	},
 	unload: function () {
-		// 清理內存
-		this.resReloadPage = this.resReloadCont = null;
+		
 	}
 };
 

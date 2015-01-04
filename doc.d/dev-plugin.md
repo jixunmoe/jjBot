@@ -46,7 +46,7 @@ pluginHelloWorld.prototype = {
 既然是机器人，一定得有方法获取聊天数据和发送消息的吧~
 ```js
 // load 方法
-that.regEvent ('msg', function (sMsg, msg, reply) {
+that.regEvent ('msg', function (next, sMsg, msg, reply) {
 	// 检查输入数据是否包含 hello 文字。
 	if (sMsg.indexOf('hello') !== 0) {
 		// 回应一句 Hello World! 给用户。
@@ -64,7 +64,7 @@ that.regEvent ('msg', function (sMsg, msg, reply) {
 ### 绑定聊天指令
 如果你想要更规范化的插件指令，你也可以绑定指令事件：
 ```js
-that.regEvent ('msg-cmd-hi', function (reply, msg, args, toWho) {
+that.regEvent ('msg-cmd-hi', function (next, reply, msg, args, toWho) {
 	// 如果用户未指定发送给谁, 则使用发送者的昵称
 	if (!toWho) toWho = msg.user.nick;
 

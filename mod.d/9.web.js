@@ -96,10 +96,10 @@ function modWeb (conf, mod) {
 				
 				// Cache for a year.
 				console.log ('Cacheble file:', url);
-				res.setHeader('Cache-Control', 'public, max-age=31556926');
-				res.setHeader('Expires', 'Thu, 01 Jan 2099 00:00:00 GMT');
 				if (fs.existsSync(conf.webPath + url) && !fs.lstatSync(conf.webPath + url).isDirectory()) {
 					// Cache the file.
+					res.setHeader('Cache-Control', 'public, max-age=31556926');
+					res.setHeader('Expires', 'Thu, 01 Jan 2099 00:00:00 GMT');
 					res.write (fileCache[url] || (fileCache[url] = fs.readFileSync(conf.webPath + url)));
 					res.end ();
 					return;
@@ -107,44 +107,36 @@ function modWeb (conf, mod) {
 				break;
 		}
 		
-		if (__FLAG__.noWebLogin || $_COOKIE.auth && loginAuth && loginAuth == $_COOKIE.auth) {
+		if (__FLAG__.noWebLogin || ($_COOKIE.auth && loginAuth && loginAuth == $_COOKIE.auth) ) {
 			var ret;
 			if (url == '/code.img') {
 				res.setHeader('Content-Type', 'image/png');
 				res.end (varifyCodeImgBin, 'binary');
 				return;
-			} else if (url == '/plug.res') {
-				// API request, for plugin
-				
-				if (debug.web)
-					mod.log.web ('Request plug.res:', $_GET.p);
+			} else if (url.indexOf('/plug.') === 0) {
+				var plugAction = url.slice(6);
 
-				// Not valid request, deny.
-				if (!$_GET.p)
-					return res.end ();
-
-				res.write (parseWrite(Bot.Plugin.onSync ('web-plug-res-' + $_GET.p, 1, $_GET, $_POST, $_COOKIE, setCookie)));
-				
-				// API
-				return res.end ();
-			} else if (url == '/plug.api') {
 				// API request, for plugin
-				
-				// Not valid request, deny.
-				if (!$_GET.a)
-					return res.end ();
+				var plugTarget = $_GET.p || $_GET.a;
 
 				if (debug.web)
-					mod.log.web ('Request plug.api:', $_GET.a);
+					mod.log.web ('Request plug.', plugAction, ':', plugTarget);
 
-				res.write (parseWrite(Bot.Plugin.onSync ('web-plug-api-' + $_GET.a, 1, $_GET, $_POST, $_COOKIE, setCookie)));
+				// Not valid request, deny.
+				if (!plugAction || !plugTarget)
+					return res.end ();
+
+				var data = {};
+				Bot.Plugin.on('web-plug-' + plugAction + '-' + plugTarget, function () {
+					res.write (parseWrite(data.data));
+					res.end ();
+				}, data, $_GET, $_POST, $_COOKIE, setCookie);
 
 				// API
-				return res.end ();
+				return ;
 			}
-		} else if (url.indexOf ('/auth/')) {
-			// If url start with /auth/, indexOf will return 0 (false)
-			url = '/auth/' + url;
+		} else if (0 !== url.indexOf ('/auth/')) {
+			url = '/auth' + url;
 		}
 
 		if (!fs.existsSync(conf.webPath + url)) {

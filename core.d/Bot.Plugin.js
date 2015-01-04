@@ -4,6 +4,9 @@
 var  fs  = require ('fs'),
 	path = require ('path');
 
+var _ = require('underscore');
+var yaml = require ('js-yaml');
+
 /**
  * Bot Core Module - BotPlugin
  * @description      Handles the plugin.
@@ -15,20 +18,79 @@ var BotPlugin = function (Bot) {
 	this.listener = {};
 };
 
-function joinObj (def) {
-	for (var i=0; i<arguments.length; i++)
-		for (var x in arguments[i])
-			def[x] = arguments[i][x];
-	return def;
-}
+var pluginProto = {
+	_cache_files: {},
+	_submods: [],
+
+	getFile: function (fn) {
+		var path = this.plugDir + fn;
+		if (!fs.existsSync(path))
+			return '';
+
+		var mtimeNow = fs.statSync(path).mtime;
+		if (!this._cache_files[fn] || mtimeNow > this._cache_files[fn].mtime) {
+			this._cache_files[fn] = {
+				content: fs.readFileSync(path),
+				mtime: mtimeNow
+			};
+		}
+
+		return this._cache_files[fn].content;
+	},
+
+	loadPluginConfig: function (defaults) {
+		var config;
+		try {
+			config = yaml.load(this.getFile('config.yaml'));
+		} finally {
+			this.config = _.extend({}, defaults, config || {});
+		}
+	},
+
+	loadPluginModules: function () {
+		var self = this;
+
+		fs.readdirSync(self.plugDir).map(function (fn) {
+			if (fn.slice(-3).toLowerCase() != '.js')
+				return ;
+
+			var fullpath = path.resolve(self.plugDir, fn);
+
+			delete self.onSubModuleLoad;
+			_.extend(self, require(fullpath));
+			if (self.onSubModuleLoad)
+				self.onSubModuleLoad();
+
+			self._submods.push(fullpath);
+		});
+	},
+
+	removeSubModule: function () {
+		_.each(this._submods, function (mod) {
+			delete require.cache[mod];
+		});
+	}
+};
 
 BotPlugin.prototype = {
-	thatCallback: function (that, foo) {
-		// Simple callback to fix 'this' issue.
-		return function () {
-			return foo.apply (that, arguments);
-		};
+	EVENT: {
+		ASYNC: false,
+		DESTORY: true,
+		PASS: 0
 	},
+
+	_regEvent: function (meta, plugin, /**/ eventName, cb) {
+		var eveIndex = this.reg (eventName, cb.bind(plugin));
+
+		if (eveIndex === null)
+			return false;
+
+		if (!meta.events[eventName])
+			meta.events[eventName] = [];
+
+		meta.events[eventName].push (eveIndex);
+	},
+
 	/**
 	 * Init the BotPlugin System.
 	 * @param  {Boolean} bForceReload Optional, if set to true is reload every plugin.
@@ -65,50 +127,46 @@ BotPlugin.prototype = {
 			// Is a directory, not a valid plugin.
 			return;
 		
-		var that = this;
+		var self = this;
 		
 		if (this.isBlacklist(sPlugFile)) {
 			return ;
 		}
 		
-		that.log.info ('Loading plugin ', sPlugFile, '...');
+		self.log.info ('Load plugin ', sPlugFile, '...');
 
 		if (bForceReload)
-			that.unloadPlugin (sPlugFile, plugPath);
+			self.unloadPlugin (sPlugFile, plugPath);
 
 		var plugInfo = {
 			module: sPlugFile,
 			events: {}
 		};
-		that.plugins[sPlugFile] = plugInfo;
+		self.plugins[sPlugFile] = plugInfo;
 
-		var newPlugin = require (plugPath);
-		var thisPlug = new newPlugin (that.bot, function (eventName, cb) {
-			// regEvent from sPlugFile, ensure 'this' is in correct context.
-			var eveIndex = that.reg (eventName, that.thatCallback(thisPlug, cb));
+		var thePlugin = require (plugPath);
+		_.extend (thePlugin.prototype, pluginProto);
 
-			if (eveIndex === null)
-				return null;
+		var _regEvent = self._regEvent.bind(self, self.plugins[sPlugFile], plugin);
+		var plugin = new thePlugin (self.bot, _regEvent);
+		plugin.bot = self.bot;
+		plugin.regEvent = _regEvent;
 
-			if (!that.plugins[sPlugFile].events[eventName])
-				that.plugins[sPlugFile].events[eventName] = [];
-
-			that.plugins[sPlugFile].events[eventName].push (eveIndex);
+		_.extend (plugInfo, {
+			name:   plugin.name  .toString(),
+			ver :   plugin.ver   .toString(),
+			author: plugin.author.toString(),
+			desc  : plugin.desc  .toString(),
+			instance: plugin
 		});
 
-		joinObj (plugInfo, {
-			name:   thisPlug.name  .toString(),
-			ver :   thisPlug.ver   .toString(),
-			author: thisPlug.author.toString(),
-			desc  : thisPlug.desc  .toString(),
-			method: thisPlug
-		});
-
-		if (thisPlug.load) {
-			thisPlug.load ();
+		if (plugin.load) {
+			if (debug.event)
+				self.log.info ('Call to plugin.load');
+			plugin.load ();
 		}
 
-		that.log.info ('Plugin ', sPlugFile, ':', thisPlug.name, thisPlug.ver);
+		self.log.info ('Plugin ', sPlugFile, ':', plugin.name, plugin.ver);
 	},
 	/**
 	 * Unloads specific plugin by given name.
@@ -129,15 +187,17 @@ BotPlugin.prototype = {
 			if (debug.event)
 				this.log.info (this.plugins[sPlugFile], require.cache[plugPath]);
 
-			var plugMethods = this.plugins[sPlugFile].method;
+			var plugin = this.plugins[sPlugFile].instance;
 			// Check if it has unload function
-			if (plugMethods.unload) {
+			if (plugin.unload) {
 				if (debug.event)
 					this.log.info ('Call to unload.');
 
 				// If exists, call it.
-				plugMethods.unload ();
+				plugin.unload ();
 			}
+
+			plugin.removeSubModule();
 
 			// Clear cache, so it can be required again fresh.
 			if (debug.event)
@@ -201,56 +261,60 @@ BotPlugin.prototype = {
 	 * @param  { .... } args Extra arguments to be passed to the event.
 	 * @return { None }
 	 */
-	on: function (type) {
-		var that = this;
-		for (var z=1, args=[]; z<arguments.length; z++)
-			args.push (arguments[z]);
+	on: function (type, onComplete) {
+		var self = this;
+		var args = Array.prototype.slice.call(arguments);
 
-		// setTimeout -> nextTick
-		process.nextTick (function () {
-			if (debug.event)
-				that.log.info ('Call event ->', type, '\nWith arguments:', args);
-			
-			if (that.listener[type]) {
-				for (var i=that.listener[type].length; i--; ) {
-					if (!that.listener[type][i])
-						continue;
-
-					if (that.listener[type][i].apply(that, args)) {
-						return;
-					}
-				}
-			}
-		});
-	},
-	/**
-	 * Boardcast an event with return value.
-	 * @param  {String}  type    The event name
-	 * @param  {Boolean} bSingle Set to true if you only want the first value fetched.
-	 * @param  { .... }  args    Extra arguments to be passed to the event.
-	 * @return { Any  }          The value returned by its event handler.
-	 */
-	onSync: function (type, bSingle) {
-		for (var z=2, args=[]; z<arguments.length; z++)
-			args.push (arguments[z]);
+		var done;
+		if ('function' == typeof onComplete) {
+			done = args.splice(1,1)[0];
+		}
 
 		if (debug.event)
-			this.log.info ('Call event[Sync] ->', type, '\nWith arguments:', args);
+			self.log.info ('Call event ->', type, '\nWith arguments:', args.slice(1));
 
-		var ret = bSingle ? null : [], retData;
-		if (this.listener[type]) {
-			for (var i=0; i<this.listener[type].length; i++) {
-				if (!this.listener[type][i])
-					continue;
-				if (bSingle)
-					return this.listener[type][i].apply(this, args);
+		if (!self.listener[type])
+			return ;
 
-				// If is not singal, just stack the returns.
-				ret.push(this.listener[type][i].apply(this, args));
+		var evLoop = new self.bot.Looper(self.listener[type], null, 0);
+
+		evLoop.setLooper(function (next, fooLooper) {
+			args.splice(0, 1, next);
+
+			/**
+			 * evResult
+			 * true:  Destory loop chain.
+			 * false: Async event, wait for me
+			 * other: event complete, next.
+			 */
+			var evResult = fooLooper.apply(self, args);
+
+			if (evResult === true) {
+				this.destory();
+			} else if (evResult !== false) {
+				next();
 			}
-		}
-		
-		return ret;
+		});
+
+		evLoop.onComplete = done;
+		evLoop.loop ();
+	},
+
+	onSync: function (type) {
+		var self = this;
+
+		type += '-sync';
+
+		var args = Array.prototype.slice.call(arguments, 1);
+		if (debug.event)
+			self.log.info ('Call event ->', type, '\nWith arguments:', args.slice(1));
+
+		if (!self.listener[type])
+			return ;
+
+		return self.listener[type]
+			.map(function (fn) { return fn.apply(self, args); })
+			.filter(function (data) { return data; });
 	}
 };
 

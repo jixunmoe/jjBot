@@ -57,19 +57,21 @@ pluginParseCommand.prototype = {
 	name  : '指令解析器!',
 	ver   : '1.0',
 	author: 'Jixun',
-	desc  : '将 jj/指令 xxx 解析为 指令 (xxx) 的调用。',
+	desc  : '将 前缀/指令 xxx 解析为 指令 (xxx) 的调用。',
 	load: function () {
-		var that = this;
-		this.regEvent ('msg', function (strMsg, msg, reply) {
+		var self = this;
+		this.regEvent ('msg', function (next, strMsg, msg, reply) {
 			// 收到消息, 開始檢查 owo
-			var cmdObj = that.parseCommand (strMsg);
-			if (!cmdObj) return false;
-			// It's a command!
-			// Boardcast to inform all other plugins.
-			
-			// Plugin(Command name, reply, msg, args, arg1, arg2, ...)
-			that.bot.Plugin.on.apply(that.bot.Plugin, [cmdObj.shift ()].concat([reply, msg, cmdObj]).concat(cmdObj));
-			return true;
+			var cmdObj = self.parseCommand (strMsg);
+
+			// 不是指令, 放弃
+			if (!cmdObj) return ;
+
+			cmdObj.splice(1, 0, reply, msg, cmdObj.slice(1));
+
+			// Plugin(next, Command name, reply, msg, args, arg1, arg2, ...)
+			self.bot.Plugin.on.apply(self.bot.Plugin, cmdObj);
+			return self.bot.Plugin.EVENT.DESTORY;
 		});
 	},
 	unload: function () {

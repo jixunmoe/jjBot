@@ -22,7 +22,7 @@ if (__FLAG__.help) {
 
 /// Setup
 var mCon = new (require('./conf'))(__FLAG__.config ? __FLAG__.config.join(' ') : './config.yaml'),
-	conf = mCon.getConf(),
+	conf = mCon.getConfig(),
 	mod  = {};
 
 /// Get absolute path to current directory.

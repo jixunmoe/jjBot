@@ -9,7 +9,8 @@ var BotAuth   = require ('./Bot.Auth'),
 	BotWebAPI = require ('./Bot.WebAPI'),
 	BotAPI    = require ('./Bot.API'),
 	BotChat   = require ('./Bot.Chat'),
-	BotPlugin = require ('./Bot.Plugin');
+	BotPlugin = require ('./Bot.Plugin'),
+	BotLooper = require ('./Bot.Looper');
 
 var fixCookie = function (cookie) {
 	var result = {},
@@ -91,6 +92,7 @@ var CoreBot = function (conf, mod, mConf) {
 	this.conf = conf;
 	this.mod = mod;
 	this.log = mod.log;
+	this.Looper = BotLooper;
 	this.API = new BotAPI (this);
 	this.Chat = new BotChat (this);
 	this.Auth = new BotAuth (this);
