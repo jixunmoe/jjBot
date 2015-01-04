@@ -20,3 +20,8 @@ build/Release
 # Deployed apps should consider commenting this line out:
 # see https://npmjs.org/doc/faq.html#Should-I-check-my-node_modules-folder-into-git
 node_modules
+
+plug.d/*.private.js
+plug.d/*.debug.js
+plug.d/*.private.d
+plug.d/*.debug.d
