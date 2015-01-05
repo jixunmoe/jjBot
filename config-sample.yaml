@@ -11,6 +11,10 @@ passwd: 'Your Password'
 # Seconds to wait before process messages.
 bootWait: 20
 
+# 消息發送間隔; 0 表示不停留 (不推薦)
+msgInterval: 200
+
+
 # Spec. Path for your file/directorys.
 logPath:  './jjBot.log'
 webPath:  './www.d/'
