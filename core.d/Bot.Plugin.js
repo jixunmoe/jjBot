@@ -255,19 +255,27 @@ BotPlugin.prototype = {
 			}
 		}
 	},
+
+	on_cb: function (type, onComplete) {
+		var args = [].slice.call(arguments, 2);
+		args.splice(0,0,{ done: onComplete, type: type });
+		return this.on.apply(this, args);
+	},
+
 	/**
 	 * Boardcast an event, async.
 	 * @param  {String} type The event name
 	 * @param  { .... } args Extra arguments to be passed to the event.
 	 * @return { None }
 	 */
-	on: function (type, onComplete) {
+	on: function (type) {
 		var self = this;
 		var args = Array.prototype.slice.call(arguments);
 
 		var done;
-		if ('function' == typeof onComplete) {
-			done = args.splice(1,1)[0];
+		if ('function' == typeof type.done) {
+			done = type.done;
+			type = type.type;
 		}
 
 		if (debug.event)

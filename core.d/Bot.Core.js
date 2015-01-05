@@ -168,8 +168,10 @@ CoreBot.prototype = {
 		});
 	},
 	saveAuth: function () {
+		this.log.info ('Begin Boot wait..');
 		setTimeout(function (self) {
 			self.bootWait = false;
+			self.log.info ('Finish Boot wait!');
 		}, this.conf.bootWait * 1000, this);
 		this.mod.cache.save ('authLogin', this.auth);
 	},

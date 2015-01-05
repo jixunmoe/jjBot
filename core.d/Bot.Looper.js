@@ -44,7 +44,6 @@ IntervalLoop.prototype = {
 				}
 			}
 		} else {
-			this.status = 2;
 			if (this.onComplete && this.onComplete.apply) {
 				try {
 					this.onComplete (this.data.length);
@@ -54,6 +53,7 @@ IntervalLoop.prototype = {
 				}
 			}
 			this.cleanup();
+			this.status = 2;
 		}
 	},
 	cleanup: function (bForce) {

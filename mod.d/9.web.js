@@ -127,7 +127,7 @@ function modWeb (conf, mod) {
 					return res.end ();
 
 				var data = {};
-				Bot.Plugin.on('web-plug-' + plugAction + '-' + plugTarget, function () {
+				Bot.Plugin.on_cb('web-plug-' + plugAction + '-' + plugTarget, function () {
 					res.write (parseWrite(data.data));
 					res.end ();
 				}, data, $_GET, $_POST, $_COOKIE, setCookie);
