@@ -43,7 +43,13 @@ chat:
     teachCommand: 'ask'
 # 教学指令中问与答的分隔符
     teachSeparator: 'answer'
-
+# 回复中可以使用的特殊指令，每行一条
+    replyArgs:
+        - name: 'msg.user.nick'
+        - myname: 'that.conf.name'
+        - cqname: 'that.conf.name' # 与某常见机器人保持词库兼容
+        - qqnum: 'msg.ucdata.qNum'
+        - nick: 'msg.ucdata.userNick || msg.user.nick'
 */
 
 function SelectBestAnswer(data) {
@@ -76,7 +82,7 @@ function SelectBestAnswer(data) {
 
 pluginChat.prototype = {
 	name  : '聊天',
-	ver   : '0.2',
+	ver   : '0.3',
 	author: 'lyh',
 	desc  : '根据收到的聊天信息给出回复。依赖 db 模组。',
 	disable: function(next,reply) {
@@ -116,6 +122,7 @@ pluginChat.prototype = {
 			this.conf.allowTeach= true;
 			this.conf.teachCommand= 'ask';
 			this.conf.teachSeparator= 'answer';
+			this.conf.replyArgs={name: 'msg.user.nick',myname: 'that.conf.name',cqname: 'that.conf.name',qqnum: 'msg.ucdata.qNum',nick: 'msg.ucdata.userNick || msg.user.nick'}
 		}
 		
 		var that = this;
@@ -143,16 +150,35 @@ pluginChat.prototype = {
 		if(!that.disabled) {
 			if(that.conf.allowTeach) {
 				that.regEvent ('help-init', function () {
-					that.bot.Plugin.on('help-set-cmd-desc',that.conf.teachCommand,'关键词 '+that.conf.teachSeparator+' 回答','教我说话（目前暂时不能在回答中加入称呼等动态内容，今后会改进）');
+					that.bot.Plugin.on('help-set-cmd-desc',that.conf.teachCommand,'关键词 '+that.conf.teachSeparator+' 回答','教我说话');
 				});
 				that.regEvent('msg-cmd-'+that.conf.teachCommand, function (next,reply, msg, args) {
 					var str=args.join(' ');
 					str=str.split(' answer ');
 					if(!str[1] || str[2]) {
 						reply('请按照 '+that.bot.conf.cmdPrefix+'/'+that.conf.teachCommand+' 收到的内容 '+that.conf.teachSeparator+' 回答的内容 的格式来教我说话哦');
+						return;
+					}
+					var check=str[1].match(/\[[^\]]*\]/g);
+					if(check!=null) {
+						for(var k in check) {
+							if(typeof(that.conf.replyArgs[check[k].substr(1,check[k].length-2)])=='undefined') {
+								reply('啊咧咧？ '+check[k]+' 这个变量找不到诶……');
+								return;
+							}
+						}
 					}
 					that.db.query ('INSERT INTO `jB_chat` VALUES (?,?);', [str[0],str[1]], function () {
-						reply (str[1]);
+						if(check!=null) {
+							var to_print=str[1].replace(/\[([^\]]*)\]/g,'%s');
+							var to_do='sprintf(to_print';
+							for(var k in check) {
+							to_do+=',"'+eval(that.conf.replyArgs[check[k].substr(1,check[k].length-2)])+'"';
+							}
+							to_do+=')';
+							str[1]=eval(to_do);
+						}
+						reply(str[1]);
 					});
 				});
 			}
@@ -164,7 +190,18 @@ pluginChat.prototype = {
 						if (data.length) {
 							data=SelectBestAnswer(data);
 							data.sort(function() {return 0.5-Math.random(); });
-							reply(data[0]);
+							var real_data=data[0];
+							var check=real_data.match(/\[[^\]]*\]/g);
+							if(check!=null) {
+								var to_print=data[0].replace(/\[([^\]]*)\]/g,'%s');
+								var to_do='sprintf(to_print';
+								for(var k in check) {
+									to_do+=',"'+eval(that.conf.replyArgs[check[k].substr(1,check[k].length-2)])+'"';
+								}
+								to_do+=')';
+								real_data=eval(to_do);
+							}
+							reply(real_data);
 						}
 					});
 				}
