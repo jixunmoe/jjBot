@@ -22,27 +22,27 @@ var pluginChat = function (Bot, regEvent) {
 # 聊天插件设置
 chat:
 # 我的称呼
-	name: 'jjBot'
+    name: 'jjBot'
 # 群组中的回复率
-	answerRate: 0.8
+    answerRate: 0.8
 # 是否接收禁用 / 启用命令
-	recieveDisable: false
+    recieveDisable: false
 # 禁用 / 启用命令
-	disableCmd: '闭嘴'
-	enableCmd: '张嘴'
+    disableCmd: '闭嘴'
+    enableCmd: '张嘴'
 # 禁用 / 启用命令是否需要jj/前缀
-	usePrefixToDisable: false
+    usePrefixToDisable: false
 # 禁用/启用所需次数
-	disableCount: 3
+    disableCount: 3
 # 管理员QQ号列表：可以无视上面的次数【TODO】
-	directDisable:
-		-10000
+    directDisable:
+        - 10000
 # 是否允许教学
-	allowTeach: true
+    allowTeach: true
 # 教学指令 (需要jj前缀)
-	teachCommand: 'ask'
+    teachCommand: 'ask'
 # 教学指令中问与答的分隔符
-	teachSeparator: 'answer'
+    teachSeparator: 'answer'
 
 */
 
