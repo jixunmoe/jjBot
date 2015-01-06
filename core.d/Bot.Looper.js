@@ -52,7 +52,7 @@ IntervalLoop.prototype = {
 					console.error (e);
 				}
 			}
-			this.cleanup();
+			this.cleanup(true);
 			this.status = 2;
 		}
 	},
