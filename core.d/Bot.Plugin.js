@@ -284,7 +284,7 @@ BotPlugin.prototype = {
 		if (!self.listener[type])
 			return ;
 
-		var evLoop = new self.bot.Looper(self.listener[type], null, 0);
+		var evLoop = new self.bot.Looper(self.listener[type].slice(), null, 0);
 
 		evLoop.setLooper(function (next, fooLooper) {
 			args.splice(0, 1, next);
