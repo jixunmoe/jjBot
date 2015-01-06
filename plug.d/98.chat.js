@@ -122,9 +122,9 @@ pluginChat.prototype = {
 		if(that.conf.recieveDisable) {
 			if(that.conf.usePrefixToDisable) {
 				// 设置命令说明文本
-				that.regEvent ('initCmdDesc', function () {
-					that.bot.Plugin.on('setCmdDesc',that.conf.disableCmd,'让我闭嘴');
-					that.bot.Plugin.on('setCmdDesc',that.conf.enableCmd,'让我继续聊天');
+				that.regEvent ('help-init', function () {
+					that.bot.Plugin.on('help-set-cmd-desc',that.conf.disableCmd,'让我闭嘴');
+					that.bot.Plugin.on('help-set-cmd-desc',that.conf.enableCmd,'让我继续聊天');
 				});
 				// 安装 Hook
 				that.regEvent ('msg-cmd-'+that.conf.disableCmd, that.disable(reply));
@@ -142,23 +142,22 @@ pluginChat.prototype = {
 		
 		if(!that.disabled) {
 			if(that.conf.allowTeach) {
-				that.regEvent ('initCmdDesc', function () {
-					that.bot.Plugin.on('setCmdDesc',that.conf.teachCommand,'关键词 '+that.conf.teachSeparator+' 回答','教我说话（目前暂时不能在回答中加入称呼等动态内容，今后会改进）');
+				that.regEvent ('help-init', function () {
+					that.bot.Plugin.on('help-set-cmd-desc',that.conf.teachCommand,'关键词 '+that.conf.teachSeparator+' 回答','教我说话（目前暂时不能在回答中加入称呼等动态内容，今后会改进）');
 				});
-				that.regEvent('msg-cmd-'+that.conf.teachCommand, function (reply, msg, args) {
+				that.regEvent('msg-cmd-'+that.conf.teachCommand, function (next,reply, msg, args) {
 					var str=args.join(' ');
 					str=str.split(' answer ');
 					if(!str[1] || str[2]) {
 						reply('请按照 '+that.bot.conf.cmdPrefix+'/'+that.conf.teachCommand+' 收到的内容 '+that.conf.teachSeparator+' 回答的内容 的格式来教我说话哦');
-						return true;
 					}
 					that.db.query ('INSERT INTO `jB_chat` VALUES (?,?);', [str[0],str[1]], function () {
-					reply (str[1]);
+						reply (str[1]);
 					});
 				});
 			}
 		}
-		that.regEvent('msg',function (str,msg,reply) {
+		that.regEvent('msg',function (next,str,msg,reply) {
 			if(!that.disabled) {
 				if(!msg.isGroup || Math.random()<=that.conf.answerRate) {
 					that.db.query ('select * from `jB_chat` where ? like concat(\'%\',ask,\'%\')', str, function (err, data) {
