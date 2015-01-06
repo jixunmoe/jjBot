@@ -1,5 +1,5 @@
 function _init (self) {
-	self.regEvent ('msg-cmd-sign', function (reply, msg, cmdObj, action) {
+	self.regEvent ('msg-cmd-sign', function (next, reply, msg, cmdObj, action) {
 		var user = msg.ucdata;
 
 		if (!self.can(user, 'sign', true)) return ;
