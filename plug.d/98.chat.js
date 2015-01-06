@@ -79,7 +79,7 @@ pluginChat.prototype = {
 	ver   : '0.2',
 	author: 'lyh',
 	desc  : '根据收到的聊天信息给出回复。依赖 db 模组。',
-	disable: function(reply) {
+	disable: function(next,reply) {
 		if(!this.disabled) {
 			this.count++;
 			if(this.count==this.conf.disableCount) {
@@ -89,7 +89,7 @@ pluginChat.prototype = {
 			}else reply('已有'+this.count+'人请求停用'+this.conf.name+'，还需要 '+(this.conf.disableCount-this.count)+' 人请求才会执行~');
 		}
 	},
-	enable: function(reply) {
+	enable: function(next,reply) {
 		if(this.disabled) {
 			this.count++;
 			if(this.count==this.conf.disableCount) {
@@ -127,15 +127,15 @@ pluginChat.prototype = {
 					that.bot.Plugin.on('help-set-cmd-desc',that.conf.enableCmd,'让我继续聊天');
 				});
 				// 安装 Hook
-				that.regEvent ('msg-cmd-'+that.conf.disableCmd, that.disable(reply));
-				that.regEvent ('msg-cmd-'+that.conf.enableCmd, that.enable(reply));
+				that.regEvent ('msg-cmd-'+that.conf.disableCmd, that.disable(next,reply));
+				that.regEvent ('msg-cmd-'+that.conf.enableCmd, that.enable(next,reply));
 			} else {
-				that.regEvent ('msg', function (content, msg, reply) {
+				that.regEvent ('msg', function (next,content, msg, reply) {
 					if(content.replace(/(^\s*)|(\s*$)/g,"")==that.conf.disableCmd) {
-						that.disable(reply);
+						that.disable(next,reply);
 					}
 					if(content.replace(/(^\s*)|(\s*$)/g,"")==that.conf.enableCmd)
-						that.enable(reply);
+						that.enable(next,reply);
 				});
 			}
 		}
