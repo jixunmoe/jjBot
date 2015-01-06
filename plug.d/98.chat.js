@@ -1,4 +1,5 @@
 /*jslint node: true*/
+var sprintf = require('util').format;
 
 var pluginChat = function (Bot, regEvent) {
 	this.bot = Bot;
