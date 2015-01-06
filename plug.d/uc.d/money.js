@@ -2,7 +2,7 @@ var sprintf = require('util').format;
 
 function _init (self) {
 	/// Command: money
-	self.regEvent ('msg-cmd-money', function (reply, msg, cmdObj) {
+	self.regEvent ('msg-cmd-money', function (next, reply, msg, cmdObj) {
 		var user = msg.ucdata;
 
 		if (!self.can(user, 'money', true)) return ;
@@ -10,7 +10,7 @@ function _init (self) {
 	});
 
 	/// Command: top
-	self.regEvent ('msg-cmd-top', function (reply, msg, nicks) {
+	self.regEvent ('msg-cmd-top', function (next, reply, msg, nicks) {
 		var user = msg.ucdata;
 
 		if (!self.can(user, 'money-top', false)) return ;
@@ -45,7 +45,7 @@ function _init (self) {
 	});
 
 	/// Command pay
-	self.regEvent ('msg-cmd-pay', function (reply, msg, cmdObj, who, amount) {
+	self.regEvent ('msg-cmd-pay', function (next, reply, msg, cmdObj, who, amount) {
 		amount = parseFloat (amount);
 		
 		if (isNaN(amount))

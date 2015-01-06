@@ -1,7 +1,7 @@
 var sprintf = require('util').format;
 
 function _init (self) {
-	self.regEvent ('msg-cmd-pem', function (reply, msg, args, action, qnum) {
+	self.regEvent ('msg-cmd-pem', function (next, reply, msg, args, action, qnum) {
 		if (!action) return ;
 		
 		// Pem list.

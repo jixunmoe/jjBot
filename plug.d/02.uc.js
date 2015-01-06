@@ -149,7 +149,7 @@ pluginUserCenter.prototype = {
 			return self.bot.Plugin.EVENT.ASYNC;
 		});
 
-		self.regEvent ('msg-cmd-nick', function (reply, msg, args) {
+		self.regEvent ('msg-cmd-nick', function (next, reply, msg, args) {
 			var user = msg.ucdata;
 			
 			if (args.length && self.can(user, 'set-nick', true)) {
@@ -172,7 +172,7 @@ pluginUserCenter.prototype = {
 		});
 		
 		/*
-		self.regEvent ('msg-cmd-', function (reply, msg, cmdObj) {
+		self.regEvent ('msg-cmd-', function (next, reply, msg, cmdObj) {
 			self.getUser (msg.from_uin, function (user) {
 				// TODO: Code here
 			});
