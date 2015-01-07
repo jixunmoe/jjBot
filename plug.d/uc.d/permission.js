@@ -62,7 +62,7 @@ module.exports = {
 		switch (action) {
 			case 'add':
 				pem.can = _.union(pem.can, pemList);
-				/* self.setPem (target.qNum, pem); */
+				self.setPem (target.qNum, pem);
 				reply (sprintf('%s 的权限添加成功!', target.userNick));
 				break;
 				
