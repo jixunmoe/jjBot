@@ -1,4 +1,4 @@
-﻿var sprintf = require('util').format;
+var sprintf = require('util').format;
 var _=require('underscore');
 function _init (self) {
 	self.regEvent ('msg-cmd-pem', function (next, reply, msg, args, action, qnum) {

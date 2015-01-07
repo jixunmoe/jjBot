@@ -1,4 +1,4 @@
-﻿var sprintf = require('util').format;
+var sprintf = require('util').format;
 function _init (self) {
 	self.regEvent ('msg-cmd-sign', function (next, reply, msg, cmdObj, action) {
 		var user = msg.ucdata;
