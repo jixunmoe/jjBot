@@ -20,7 +20,7 @@ pluginHelp.prototype = {
 		this.regEvent ('help-set-cmd-desc-sync', function(cmd,args,desc) {
 			if(arguments.length!=2 && arguments.length!=3)
 				return;
-			if(arguments.length==3) {
+			if(arguments.length==2) {
 				that.cmdDesc[cmd]=args;
 			}
 			else {
