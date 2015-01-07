@@ -131,8 +131,8 @@ pluginChat.prototype = {
 			if(that.conf.usePrefixToDisable) {
 				// 设置命令说明文本
 				that.regEvent ('help-init', function () {
-					that.bot.Plugin.on('help-set-cmd-desc',that.conf.disableCmd,'让我闭嘴');
-					that.bot.Plugin.on('help-set-cmd-desc',that.conf.enableCmd,'让我继续聊天');
+					that.bot.Plugin.onSync('help-set-cmd-desc',that.conf.disableCmd,'让我闭嘴');
+					that.bot.Plugin.onSync('help-set-cmd-desc',that.conf.enableCmd,'让我继续聊天');
 				});
 				// 安装 Hook
 				that.regEvent ('msg-cmd-'+that.conf.disableCmd, that.disable(next,reply));
@@ -151,7 +151,7 @@ pluginChat.prototype = {
 		if(!that.disabled) {
 			if(that.conf.allowTeach) {
 				that.regEvent ('help-init', function () {
-					that.bot.Plugin.on('help-set-cmd-desc',that.conf.teachCommand,'关键词 '+that.conf.teachSeparator+' 回答','教我说话');
+					that.bot.Plugin.onSync('help-set-cmd-desc',that.conf.teachCommand,'关键词 '+that.conf.teachSeparator+' 回答','教我说话');
 				});
 				that.regEvent('msg-cmd-'+that.conf.teachCommand, function (next,reply, msg, args) {
 					var str=args.join(' ');
