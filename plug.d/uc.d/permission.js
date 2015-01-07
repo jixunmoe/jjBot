@@ -1,5 +1,5 @@
-var sprintf = require('util').format;
-
+﻿var sprintf = require('util').format;
+var _=require('underscore');
 function _init (self) {
 	self.regEvent ('msg-cmd-pem', function (next, reply, msg, args, action, qnum) {
 		if (!action) return ;
@@ -42,7 +42,7 @@ module.exports = {
 	},
 
 	setPem: function (qnum, newPem) {
-		self.db.query (
+		this.db.query (
 			'update `jB_user` SET `pems`=? WHERE `qNum` = ?;',
 			[JSON.stringify (newPem), qnum]
 		);
@@ -50,7 +50,7 @@ module.exports = {
 
 	pemBridge: function (reply, action, pemList, target) {
 		var pem = target.pems;
-		
+		var self=this;
 		if (action == 'list') {
 			reply (sprintf('[%s] 拥有的权限有: %s\n黑名单权限为: %s', target.userNick, pem.can.join('、'), pem.no.join('、')));
 			return;
@@ -62,7 +62,7 @@ module.exports = {
 		switch (action) {
 			case 'add':
 				pem.can = _.union(pem.can, pemList);
-				self.setPem (target.qNum, pem);
+				/* self.setPem (target.qNum, pem); */
 				reply (sprintf('%s 的权限添加成功!', target.userNick));
 				break;
 				
