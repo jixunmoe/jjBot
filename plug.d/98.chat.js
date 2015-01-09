@@ -156,6 +156,10 @@ pluginChat.prototype = {
 						reply('请按照 '+that.bot.conf.cmdPrefix+'/'+that.conf.teachCommand+' 收到的内容 '+that.conf.teachSeparator+' 回答的内容 的格式来教我说话哦');
 						return;
 					}
+					if(str[0].match(/\/[^.]*\);/)!==null) {
+						reply('请勿作死。');
+						return;
+					}
 					var check=str[1].match(/\[[^\]]*\]/g);
 					if(check!==null) {
 						for(var k in check) {
@@ -182,7 +186,9 @@ pluginChat.prototype = {
 							data=SelectBestAnswer(data);
 							data.sort(function() {return 0.5-Math.random(); }); //找时间换掉
 							var realValue=_.template(data[0].replace(/\[([^\]]*)\]/g,function(match,item) {
+							if (typeof(that.conf.replyArgs[item])!=undefined)
 								return '{{'+that.conf.replyArgs[item]+'}}';
+							return '[啊咧咧？ '+item+' 这个变量找不到诶……]';
 							}));
 							reply(realValue({that:that,msg:msg}));
 						}
