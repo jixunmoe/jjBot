@@ -1,11 +1,7 @@
 /*jslint node: true*/
 
 
-var pluginHelp = function (Bot, regEvent) {
-	this.bot = Bot;
-	this.regEvent = regEvent;
-	this.listener = Bot.Plugin.listener;
-	this.plugins = Bot.Plugin.plugins;
+var pluginHelp = function () {
 	this.cmdDesc = {};
 	this.cmdArgs = {};
 };
@@ -15,6 +11,10 @@ pluginHelp.prototype = {
 	ver   : '1.0',
 	author: 'lyh',
 	desc  : '通过指令 help 显示指令列表，指令 plugins 显示插件列表',
+	init : function(Bot) {
+		this.listener = Bot.Plugin.listener;
+		this.plugins = Bot.Plugin.plugins;
+	},
 	load: function () {
 		var that=this;
 		this.regEvent ('help-set-cmd-desc-sync', function(cmd,args,desc) {

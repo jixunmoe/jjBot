@@ -2,22 +2,7 @@
 
 var _=require('underscore');
 
-var pluginChat = function (Bot, regEvent) {
-	this.bot = Bot;
-	this.mod = Bot.mod;
-	this.regEvent = regEvent;
-	this.ext = Bot.mod.db;
-	this.db = this.ext.db;
-	this.disabled=false;
-	this.count=0;
-	Bot.mod.log.info ('Init. database ...');
-	this.db.query (this.ext._(this.ext.__(function () {/*
-	create table if not exists `jB_chat` (
-		`ask` TEXT NOT NULL,
-		`answer` TEXT NOT NULL
-	)ENGINE = %s DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
-	*/}), this.ext.conf.engine));
-};
+var pluginChat = function () {};
 
 /* 本模组的config，请添加到config.yaml
 
@@ -82,6 +67,20 @@ pluginChat.prototype = {
 	ver   : '0.3',
 	author: 'lyh',
 	desc  : '根据收到的聊天信息给出回复。依赖 db 模组。',
+	init : function(Bot) {
+		this.mod = Bot.mod;
+		this.ext = Bot.mod.db;
+		this.db = this.ext.db;
+		this.disabled=false;
+		this.count=0;
+		Bot.mod.log.info ('Init chat database ...');
+		this.db.query (this.ext._(this.ext.__(function () {/*
+		create table if not exists `jB_chat` (
+			`ask` TEXT NOT NULL,
+			`answer` TEXT NOT NULL
+		)ENGINE = %s DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+		*/}), this.ext.conf.engine));
+	},
 	disable: function(next,reply) {
 		if(!this.disabled) {
 			this.count++;
