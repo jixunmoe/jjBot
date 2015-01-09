@@ -3,10 +3,7 @@
 
 var fs = require ('fs');
 
-var pluginTestFoo = function (Bot, regEvent) {
-	this.bot = Bot;
-	this.regEvent = regEvent;
-};
+var pluginTestFoo = function () { };
 
 pluginTestFoo.prototype = {
 	name  : '图片分享',

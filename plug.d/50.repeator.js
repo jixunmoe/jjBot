@@ -1,8 +1,6 @@
 /*jslint node: true*/
 
-var pluginRepeator = function (Bot, regEvent) {
-	this.bot = Bot;
-	this.regEvent = regEvent;
+var pluginRepeator = function () {
 	this.repeatCache = {};
 };
 
@@ -12,24 +10,24 @@ pluginRepeator.prototype = {
 	author: 'Jixun',
 	desc  : '复读 10s 内出现 3 次的内容 [几率为 60%]。',
 	load: function () {
-		var that = this;
+		var self = this;
 		
 		// 安裝 Hook
 		this.regEvent ('msg', function (next, strMsg, msg, reply) {
 			if (!strMsg) return ;
 			
-			var repCount = that.repeatCache[strMsg];
+			var repCount = self.repeatCache[strMsg];
 			if (repCount) {
-				++that.repeatCache[strMsg];
+				++self.repeatCache[strMsg];
 				
 				if (repCount == 3 && Math.random () > 0.4)
-					reply (strMsg + '[跟风]');
+					reply (strMsg + ' [复读]');
 			} else {
-				that.repeatCache[strMsg] = 1;
+				self.repeatCache[strMsg] = 1;
 
 				setTimeout (function () {
-					if (that.repeatCache && that.repeatCache[strMsg])
-						delete that.repeatCache[strMsg];
+					if (self.repeatCache && self.repeatCache[strMsg])
+						delete self.repeatCache[strMsg];
 				}, 10000);
 			}
 		});

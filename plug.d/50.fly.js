@@ -1,9 +1,6 @@
 /*jslint node: true*/
 
-var pluginHello = function (Bot, regEvent) {
-	this.bot = Bot;
-	this.regEvent = regEvent;
-};
+var pluginHello = function () {  };
 
 pluginHello.prototype = {
 	name  : 'jjFly!',
