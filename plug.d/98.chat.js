@@ -53,6 +53,7 @@ chat:
         - nick: 'msg.ucdata.userNick || msg.user.nick'
 */
 
+//此函数为胡写！！！！！希望有懂聊天AI的人重写一个
 function SelectBestAnswer(data) {
 	var key=[];
 	var answer=[];
@@ -64,8 +65,8 @@ function SelectBestAnswer(data) {
 	}
 	for(var ans in answer) {
 		for(var ask in key) { //检测回复中出现的所有关键词（包括重复的）
-      var reg=new RegExp('/'+ask+'/g');
-			var cnt=reg.exec(ask);
+			var reg=new RegExp(ask,'g');
+			var cnt=reg.exec(answer);
 			if(cnt!==null)
 				answer[ans]+=(cnt.length*key[ask]); //回复的权重加上(关键词权重*出现次数)
 		}
@@ -73,12 +74,7 @@ function SelectBestAnswer(data) {
 	answer.sort(function(a,b) {if (a > b) return -1; else  return 1;});
 	var ret=[];
 	var lastWeight=0;
-	for(ans in answer) { //返回5条权重最高的，相同的都返回
-		if(ret.length>5 && lastWeight>answer[ans]) break;
-		ret.push(ans);
-		lastWeight=answer[ans];
-	}
-	return ret;
+	return answer.length < 6 ? answer : answer.filter(function (ans) { return ans >= answer[4]; });//返回5条权重最高的，相同的都返回
 }
 
 
@@ -136,14 +132,14 @@ pluginChat.prototype = {
 					that.bot.Plugin.onSync('help-set-cmd-desc',that.conf.enableCmd,'让我继续聊天');
 				});
 				// 安装 Hook
-				that.regEvent ('msg-cmd-'+that.conf.disableCmd, that.disable(next,reply));
-				that.regEvent ('msg-cmd-'+that.conf.enableCmd, that.enable(next,reply));
+				that.regEvent ('msg-cmd-'+that.conf.disableCmd, that.disable());
+				that.regEvent ('msg-cmd-'+that.conf.enableCmd, that.enable());
 			} else {
 				that.regEvent ('msg', function (next,content, msg, reply) {
-					if(content.replace(/(^\s*)|(\s*$)/g,"")==that.conf.disableCmd) {
+					if(content.trim()==that.conf.disableCmd) {
 						that.disable(next,reply);
 					}
-					if(content.replace(/(^\s*)|(\s*$)/g,"")==that.conf.enableCmd)
+					if(content.trim()==that.conf.enableCmd)
 						that.enable(next,reply);
 				});
 			}
@@ -170,7 +166,7 @@ pluginChat.prototype = {
 							}
 						}
 					}
-					that.db.query ('INSERT INTO `jB_chat` VALUES (?,?);', [str[0],str[1]], function () {
+					that.db.query ('INSERT INTO `jB_chat` VALUES (?,?);', str, function () {
 						if(check!==null) {
 							var to_print=str[1].replace(/\[([^\]]*)\]/g,'%s');
 							var to_do='sprintf(to_print';
@@ -188,10 +184,10 @@ pluginChat.prototype = {
 		that.regEvent('msg',function (next,str,msg,reply) {
 			if(!that.disabled) {
 				if(!msg.isGroup || Math.random()<=that.conf.answerRate) {
-					that.db.query ('select * from `jB_chat` where ? like concat(\'%\',ask,\'%\')', str, function (err, data) {
+					that.db.query ('select * from `jB_chat` where ? like concat(\'%\',ask,\'%\')', str, function (err, data) { //CANT SPLIT CHINESE, HAVE TO MATCH WITH KEYWORD
 						if (data.length) {
 							data=SelectBestAnswer(data);
-							data.sort(function() {return 0.5-Math.random(); });
+							data.sort(function() {return 0.5-Math.random(); }); //找时间换掉
 							var real_data=data[0];
 							var check=real_data.match(/\[[^\]]*\]/g);
 							if(check!==null) {
