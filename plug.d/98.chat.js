@@ -64,15 +64,16 @@ function SelectBestAnswer(data) {
 	}
 	for(var ans in answer) {
 		for(var ask in key) { //检测回复中出现的所有关键词（包括重复的）
-			eval("var cnt=ans.match(/"+ask+"/g)");
-			if(cnt!=null)
+      var reg=new RegExp('/'+ask+'/g');
+			var cnt=reg.exec(ask);
+			if(cnt!==null)
 				answer[ans]+=(cnt.length*key[ask]); //回复的权重加上(关键词权重*出现次数)
 		}
 	}
-	answer.sort(function(a,b) {if (x > y) return -1; else  return 1;});
+	answer.sort(function(a,b) {if (a > b) return -1; else  return 1;});
 	var ret=[];
 	var lastWeight=0;
-	for(var ans in answer) { //返回5条权重最高的，相同的都返回
+	for(ans in answer) { //返回5条权重最高的，相同的都返回
 		if(ret.length>5 && lastWeight>answer[ans]) break;
 		ret.push(ans);
 		lastWeight=answer[ans];
@@ -110,7 +111,7 @@ pluginChat.prototype = {
 		if(typeof(this.bot.conf.chat)!='undefined')
 			this.conf=this.bot.conf.chat;
 		else {
-			this.conf=new Object();
+      this.conf={};
 			//载入缺省配置
 			this.conf.name= 'jjBot';
 			this.conf.answerRate= 0.8;
@@ -123,7 +124,7 @@ pluginChat.prototype = {
 			this.conf.allowTeach= true;
 			this.conf.teachCommand= 'ask';
 			this.conf.teachSeparator= 'answer';
-			this.conf.replyArgs={name: 'msg.user.nick',myname: 'that.conf.name',cqname: 'that.conf.name',qqnum: 'msg.ucdata.qNum',nick: 'msg.ucdata.userNick || msg.user.nick'}
+			this.conf.replyArgs={name: 'msg.user.nick',myname: 'that.conf.name',cqname: 'that.conf.name',qqnum: 'msg.ucdata.qNum',nick: 'msg.ucdata.userNick || msg.user.nick'};
 		}
 		
 		var that = this;
@@ -161,7 +162,7 @@ pluginChat.prototype = {
 						return;
 					}
 					var check=str[1].match(/\[[^\]]*\]/g);
-					if(check!=null) {
+					if(check!==null) {
 						for(var k in check) {
 							if(typeof(that.conf.replyArgs[check[k].substr(1,check[k].length-2)])=='undefined') {
 								reply('啊咧咧？ '+check[k]+' 这个变量找不到诶……');
@@ -170,7 +171,7 @@ pluginChat.prototype = {
 						}
 					}
 					that.db.query ('INSERT INTO `jB_chat` VALUES (?,?);', [str[0],str[1]], function () {
-						if(check!=null) {
+						if(check!==null) {
 							var to_print=str[1].replace(/\[([^\]]*)\]/g,'%s');
 							var to_do='sprintf(to_print';
 							for(var k in check) {
@@ -193,7 +194,7 @@ pluginChat.prototype = {
 							data.sort(function() {return 0.5-Math.random(); });
 							var real_data=data[0];
 							var check=real_data.match(/\[[^\]]*\]/g);
-							if(check!=null) {
+							if(check!==null) {
 								var to_print=data[0].replace(/\[([^\]]*)\]/g,'%s');
 								var to_do='sprintf(to_print';
 								for(var k in check) {
