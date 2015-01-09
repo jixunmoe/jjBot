@@ -1,5 +1,6 @@
 /*jslint node: true*/
-var sprintf = require('util').format;
+
+var _=require('underscore');
 
 var pluginChat = function (Bot, regEvent) {
 	this.bot = Bot;
@@ -72,8 +73,6 @@ function SelectBestAnswer(data) {
 		}
 	}
 	answer.sort(function(a,b) {if (a > b) return -1; else  return 1;});
-	var ret=[];
-	var lastWeight=0;
 	return answer.length < 6 ? answer : answer.filter(function (ans) { return ans >= answer[4]; });//返回5条权重最高的，相同的都返回
 }
 
@@ -132,8 +131,8 @@ pluginChat.prototype = {
 					that.bot.Plugin.onSync('help-set-cmd-desc',that.conf.enableCmd,'让我继续聊天');
 				});
 				// 安装 Hook
-				that.regEvent ('msg-cmd-'+that.conf.disableCmd, that.disable());
-				that.regEvent ('msg-cmd-'+that.conf.enableCmd, that.enable());
+				that.regEvent ('msg-cmd-'+that.conf.disableCmd, that.disable);
+				that.regEvent ('msg-cmd-'+that.conf.enableCmd, that.enable);
 			} else {
 				that.regEvent ('msg', function (next,content, msg, reply) {
 					if(content.trim()==that.conf.disableCmd) {
@@ -167,16 +166,10 @@ pluginChat.prototype = {
 						}
 					}
 					that.db.query ('INSERT INTO `jB_chat` VALUES (?,?);', str, function () {
-						if(check!==null) {
-							var to_print=str[1].replace(/\[([^\]]*)\]/g,'%s');
-							var to_do='sprintf(to_print';
-							for(var k in check) {
-							to_do+=',"'+eval(that.conf.replyArgs[check[k].substr(1,check[k].length-2)])+'"';
-							}
-							to_do+=')';
-							str[1]=eval(to_do);
-						}
-						reply(str[1]);
+						var realValue=_.template(str[1].replace(/\[([^\]]*)\]/g,function(match,item) {
+								return '{{'+that.conf.replyArgs[item]+'}}';
+							}));
+							reply(realValue({that:that,msg:msg}));
 					});
 				});
 			}
@@ -188,18 +181,10 @@ pluginChat.prototype = {
 						if (data.length) {
 							data=SelectBestAnswer(data);
 							data.sort(function() {return 0.5-Math.random(); }); //找时间换掉
-							var real_data=data[0];
-							var check=real_data.match(/\[[^\]]*\]/g);
-							if(check!==null) {
-								var to_print=data[0].replace(/\[([^\]]*)\]/g,'%s');
-								var to_do='sprintf(to_print';
-								for(var k in check) {
-									to_do+=',"'+eval(that.conf.replyArgs[check[k].substr(1,check[k].length-2)])+'"';
-								}
-								to_do+=')';
-								real_data=eval(to_do);
-							}
-							reply(real_data);
+							var realValue=_.template(data[0].replace(/\[([^\]]*)\]/g,function(match,item) {
+								return '{{'+that.conf.replyArgs[item]+'}}';
+							}));
+							reply(realValue({that:that,msg:msg}));
 						}
 					});
 				}

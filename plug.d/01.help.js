@@ -1,6 +1,6 @@
 /*jslint node: true*/
 
-var sprintf = require('util').format;
+
 var pluginHelp = function (Bot, regEvent) {
 	this.bot = Bot;
 	this.regEvent = regEvent;
@@ -47,13 +47,13 @@ pluginHelp.prototype = {
 			that.bot.Plugin.onSync('help-set-cmd-desc','img',false);
 		});
 		// 安裝 Hook
-		this.regEvent ('msg-cmd-help', function (next,reply, msg) {
+		this.regEvent ('msg-cmd-help', function (next,reply,msg) {
 			that.bot.Plugin.on_cb('help-init',function(){
-				rp='当前支持的指令列表如下：\n';
+				var rp='当前支持的指令列表如下：\n';
 				for(var type in that.listener) {
 					if(type.substr(0,8)=='msg-cmd-') {
 						var cmdName=type.substr(8);
-						if(that.cmdDesc[cmdName]==false)
+						if(that.cmdDesc[cmdName]===false)
 							continue;
 						rp+=that.bot.conf.cmdPrefix+'/'+cmdName;
 						if(typeof(that.cmdArgs[cmdName])!="undefined")
@@ -67,7 +67,7 @@ pluginHelp.prototype = {
 			});
 		});
 		this.regEvent ('msg-cmd-plugins', function (next,reply, msg) {
-			rp='当前已安装的插件列表如下：\n';
+			var rp='当前已安装的插件列表如下：\n';
 			for(var key in that.plugins) {
 				rp+=that.plugins[key].name+' '+that.plugins[key].ver+' 作者：'+that.plugins[key].author+' '+that.plugins[key].desc+'\n';
 			}
