@@ -5,35 +5,9 @@ var _ = require('underscore');
 var path = require('path');
 var sprintf = require('util').format;
 
-function joinObj (def) {
-	for (var i=0; i<arguments.length; i++)
-		for (var x in arguments[i])
-			def[x] = arguments[i][x];
-	return def;
-}
-
-var pluginUserCenter = function (Bot, regEvent) {
+var pluginUserCenter = function () {
 	global.$uc = this;
-
-	this.bot = Bot;
-	this.mod = Bot.mod;
-	this.regEvent = regEvent;
-	this.ext = Bot.mod.db;
-	this.db = this.ext.db;
-	
-	Bot.mod.log.info ('Init uc database ...');
-	this.db.query (sprintf(this.ext.__(function () {/*
-	create table if not exists `jB_user` (
-		`qNum` VARCHAR(20) NOT NULL,
-		`userNick` VARCHAR(20) NULL,
-		`tLastSign` TIMESTAMP NULL,
-		`dMoneyLeft` FLOAT NULL,
-		`pems` text NULL,
-		UNIQUE INDEX `qNum` (`qNum` ASC)
-	)ENGINE = %s DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
-	*/}), this.ext.conf.engine));
-
-	this.plugDir = __dirname + '/uc.d/';
+	this.plugDir = 'uc.d';
 	this.loadPluginConfig  ();
 };
 
@@ -44,8 +18,27 @@ pluginUserCenter.prototype = {
 	desc  : '用户签到以及其他功能，依赖 db 模组。',
 
 	load: function () {
+		this.init (this.bot);
 		this.registerEvents ();
 		this.loadPluginModules ();
+	},
+
+	init: function (Bot) {
+		this.mod = Bot.mod;
+		this.ext = Bot.mod.db;
+		this.db = this.ext.db;
+		
+		Bot.mod.log.info ('Init uc database ...');
+		this.db.query (sprintf(this.ext.__(function () {/*
+		create table if not exists `jB_user` (
+			`qNum` VARCHAR(20) NOT NULL,
+			`userNick` VARCHAR(20) NULL,
+			`tLastSign` TIMESTAMP NULL,
+			`dMoneyLeft` FLOAT NULL,
+			`pems` text NULL,
+			UNIQUE INDEX `qNum` (`qNum` ASC)
+		)ENGINE = %s DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+		*/}), this.ext.conf.engine));
 	},
 
 	// uc.d/sign.js for the complete version.
@@ -59,7 +52,7 @@ pluginUserCenter.prototype = {
 		self.db.query('insert ignore into `jB_user` (`qNum`, `dMoneyLeft`) values (?, ?)', 
 							[qqNum, self.bot.conf.user.default.dMoneyLeft]);
 		
-		cb (joinObj({
+		cb (_.extend({
 			qNum: qqNum,
 			isNew: true,
 			pems: {can: [], no: []}

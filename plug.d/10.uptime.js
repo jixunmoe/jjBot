@@ -1,9 +1,6 @@
 /*jslint node: true*/
 
-var pluginHello = function (Bot, regEvent) {
-	this.bot = Bot;
-	this.regEvent = regEvent;
-};
+var pluginHello = function () { };
 
 pluginHello.prototype = {
 	name  : 'Uptime',
@@ -11,11 +8,11 @@ pluginHello.prototype = {
 	author: 'Jixun',
 	desc  : '获取机器人上线时间长度',
 	load: function () {
-		var that = this;
+		var self = this;
 		
 		// 安裝 Hook
 		this.regEvent ('msg-cmd-uptime', function (next, reply) {
-			var secs = (new Date() - that.bot.mod.boot.time) / 1000;
+			var secs = (new Date() - self.bot.mod.boot.time) / 1000;
 			reply ('这次欢快的跑了 ' + Math.floor(secs % 86400 / 3600) + '时 ' + Math.floor(secs % 3600 / 60) + '分钟呢~');
 		});
 	},

@@ -50,6 +50,8 @@ var pluginProto = {
 	loadPluginModules: function () {
 		var self = this;
 
+		console.info (self.plugDir);
+
 		fs.readdirSync(self.plugDir).map(function (fn) {
 			if (fn.slice(-3).toLowerCase() != '.js')
 				return ;
@@ -79,8 +81,13 @@ BotPlugin.prototype = {
 		PASS: 0
 	},
 
-	_regEvent: function (meta, plugin, /**/ eventName, cb) {
-		var eveIndex = this.reg (eventName, cb.bind(plugin));
+	_regEvent: function (bot, meta, plugin, /**/ eventName, cb) {
+		if (typeof cb !== 'function') {
+			bot.mod.log.warn ('绑定事件', eventName, '所传入的回调不是函数! 你是不是把函数执行了? (' + String(cb) + ')');
+			return false;
+		}
+
+		var eveIndex = this.reg (eventName, cb.bind(plugin.instance));
 
 		if (eveIndex === null)
 			return false;
@@ -147,10 +154,22 @@ BotPlugin.prototype = {
 		var thePlugin = require (plugPath);
 		_.extend (thePlugin.prototype, pluginProto);
 
-		var _regEvent = self._regEvent.bind(self, self.plugins[sPlugFile], plugin);
-		var plugin = new thePlugin (self.bot, _regEvent);
+		var plugin = new thePlugin ();
 		plugin.bot = self.bot;
-		plugin.regEvent = _regEvent;
+		plugin.regEvent = self._regEvent.bind(self, self.bot, self.plugins[sPlugFile], plugin);
+		
+		var plugDir = plugin.plugDir || '';
+		Object.defineProperty(plugin, 'plugDir', {
+			get: function () {
+				return plugDir;
+			},
+
+			set: function (_newPath) {
+				plugDir = path.resolve(plugPath, '..', _newPath) + '/';
+			}
+		});
+
+		plugin.plugDir = plugDir;
 
 		_.extend (plugInfo, {
 			name:   plugin.name  .toString(),

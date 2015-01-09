@@ -4,7 +4,7 @@
 var fs = require ('fs');
 
 var pluginReloadAll = function () {
-	this.plugDir = __dirname + '/emu-msg-eve.d/';
+	this.plugDir = 'emu-msg-eve.d';
 };
 
 pluginReloadAll.prototype = {

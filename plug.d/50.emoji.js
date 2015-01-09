@@ -1,9 +1,6 @@
 /*jslint node: true*/
 
-var pluginEmoji = function (Bot, regEvent) {
-	this.bot = Bot;
-	this.regEvent = regEvent;
-};
+var pluginEmoji = function () {  };
 
 pluginEmoji.prototype = {
 	name  : '颜文字表情包',
@@ -11,8 +8,6 @@ pluginEmoji.prototype = {
 	author: 'Jixun',
 	desc  : '回复用语句待完善; 颜文字回应几率为 60%',
 	load: function () {
-		var that = this;
-		
 		// 安裝 Hook
 		this.regEvent ('msg', function (next, strMsg, msg, reply) {
 			if (Math.random() > 0.3) {
