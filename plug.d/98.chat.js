@@ -58,7 +58,15 @@ function SelectBestAnswer(data) {
 		}
 	}
 	answer.sort(function(a,b) {if (a > b) return -1; else  return 1;});
-	return answer.length < 6 ? answer : answer.filter(function (ans) { return ans >= answer[4]; });//返回5条权重最高的，相同的都返回
+	//return answer.length < 6 ? answer : answer.filter(function (ans) { return ans >= answer[4]; });//返回5条权重最高的，相同的都返回
+	var ret=[];
+ 	var lastWeight=0;
+	for(ans in answer) { //返回5条权重最高的，相同的都返回
+		if(ret.length>5 && lastWeight>answer[ans]) break;
+		ret.push(ans);
+		lastWeight=answer[ans];
+	}
+	return ret;
 }
 
 
