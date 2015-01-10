@@ -1,9 +1,6 @@
 /*jslint node: true*/
 
-var pluginHelloWorld = function (Bot, regEvent) {
-	this.bot = Bot;
-	this.regEvent = regEvent;
-};
+var pluginHelloWorld = function () {};
 
 pluginHelloWorld.prototype = {
 	// 插件名称
@@ -17,9 +14,7 @@ pluginHelloWorld.prototype = {
 	
 	// 插件调用，用于注册事件等。
 	load: function () {
-		var that = this;
-		
-		that.regEvent ('msg', function (next, sMsg, msg, reply) {
+		this.regEvent ('msg', function (next, sMsg, msg, reply) {
 			// 检查输入数据是否包含 hello 文字。
 			if (sMsg.indexOf('hello') !== 0) {
 				// 回应一句 Hello World! 给用户。
@@ -28,7 +23,7 @@ pluginHelloWorld.prototype = {
 			}
 		});
 		
-		that.regEvent ('msg-cmd-hi', function (next, reply, msg, args, toWho) {
+		this.regEvent ('msg-cmd-hi', function (next, reply, msg, args, toWho) {
 			// 如果用户未指定发送给谁, 则使用发送者的昵称
 			if (!toWho) toWho = msg.user.nick;
 			

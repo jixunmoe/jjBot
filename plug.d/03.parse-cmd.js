@@ -29,6 +29,7 @@ pluginParseCommand.prototype = {
 	},
 
 	parseCommand: function (inputCommand) {
+		var that=this;
 		that.cmd = that.cmd ||
 					(__FLAG__.cmdPrefix ? __FLAG__.cmdPrefix.join('') : this.bot.conf.cmdPrefix)
 						.toLowerCase() + '/';

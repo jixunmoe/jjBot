@@ -5,7 +5,7 @@
 
 如果遇到问题，请先尝试翻阅 [Wiki](https://github.com/JixunMoe/jjBot/wiki/FAQ-常见问题)
 
-该项目授权采用 MIT 授权协议: 您可以自由修改及分发, 但请务必保留作者版权。
+该项目授权采用 MIT 授权协议: 您可以自由修改及分发, 但请务必保留作者版权；该项目的所有贡献者名单可以在[此处查看](https://github.com/JixunMoe/jjBot/graphs/contributors)。
 
 项目成立于 2014 年 4 月, 因看到友人利用现有协议重写 [NekoBot](https://github.com/amphineko/nekobot)。~~一时脑热~~觉得挺好玩的于是毅然退出原本基于 [QQBot](https://github.com/xhan/qqbot) 开发的 [QBot](https://github.com/JixunMoe/qbot), 砍掉重写。
 
