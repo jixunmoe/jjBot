@@ -1,10 +1,7 @@
 /*jslint node: true*/
 
 
-var pluginHelp = function () {
-	this.cmdDesc = {};
-	this.cmdArgs = {};
-};
+var pluginHelp = function () {};
 
 pluginHelp.prototype = {
 	name  : '指令列表',
@@ -14,8 +11,11 @@ pluginHelp.prototype = {
 	init : function(Bot) {
 		this.listener = Bot.Plugin.listener;
 		this.plugins = Bot.Plugin.plugins;
+		this.cmdDesc = {};
+		this.cmdArgs = {};
 	},
 	load: function () {
+		this.init(this.bot);
 		var that=this;
 		this.regEvent ('help-set-cmd-desc-sync', function(cmd,args,desc) {
 			if(arguments.length!=2 && arguments.length!=3)

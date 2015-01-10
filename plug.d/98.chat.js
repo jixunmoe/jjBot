@@ -102,6 +102,7 @@ pluginChat.prototype = {
 		}
 	},
 	load: function () {
+		this.init(this.bot);
 		if(typeof(this.bot.conf.chat)!='undefined')
 			this.conf=this.bot.conf.chat;
 		else {
