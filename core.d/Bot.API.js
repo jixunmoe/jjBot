@@ -39,7 +39,7 @@ function onDataCallback (that, cb, preSetup) {
 			body += chunk;
 		});
 		r.on ('end', function () {
-			process.nextTick (cb.bind({}, body.toString(), r));
+			cb (body.toString(), r);
 		});
 	};
 }
@@ -84,6 +84,8 @@ BotAPI.prototype = {
 				process.nextTick (function () {
 					that.get (path, query, cb, numTry + 1);
 				});
+			} else {
+				cb (false);
 			}
 		});
 	},
@@ -120,6 +122,8 @@ BotAPI.prototype = {
 				process.nextTick (function () {
 					that.post (path, data, cb, host, numTry + 1);
 				});
+			} else {
+				cb (false);
 			}
 		});
 		req.write (postData);
