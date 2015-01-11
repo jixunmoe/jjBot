@@ -50,8 +50,6 @@ var pluginProto = {
 	loadPluginModules: function () {
 		var self = this;
 
-		console.info (self.plugDir);
-
 		fs.readdirSync(self.plugDir).map(function (fn) {
 			if (fn.slice(-3).toLowerCase() != '.js')
 				return ;
