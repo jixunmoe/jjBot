@@ -85,7 +85,7 @@ BotPlugin.prototype = {
 			return false;
 		}
 
-		var eveIndex = this.reg (eventName, cb.bind(plugin.instance));
+		var eveIndex = this.reg (eventName, cb.bind(plugin));
 
 		if (eveIndex === null)
 			return false;
