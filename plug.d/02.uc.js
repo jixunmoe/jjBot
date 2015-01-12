@@ -62,7 +62,7 @@ pluginUserCenter.prototype = {
 		if (!cb) return null; // Invalid request.
 		
 		var self = this;
-		var userNum = self.bot.friendHashTable.table[uin];
+		var userNum = self.bot.friendHashTable.table[uin] || self.bot.uinCache.table[uin];
 		if (userNum) {
 			self.getUserByNum (userNum, cb);
 			return ;

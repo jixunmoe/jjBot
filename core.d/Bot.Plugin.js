@@ -6,6 +6,7 @@ var  fs  = require ('fs'),
 
 var _ = require('underscore');
 var yaml = require ('js-yaml');
+var sprintf = require('util').format;
 
 /**
  * Bot Core Module - BotPlugin
@@ -41,7 +42,7 @@ var pluginProto = {
 	loadPluginConfig: function (defaults) {
 		var config;
 		try {
-			config = yaml.load(this.getFile('config.yaml'));
+			config = yaml.load(this.getFile('config.yaml').toString());
 		} finally {
 			this.config = _.extend({}, defaults, config || {});
 		}
@@ -49,8 +50,6 @@ var pluginProto = {
 
 	loadPluginModules: function () {
 		var self = this;
-
-		console.info (self.plugDir);
 
 		fs.readdirSync(self.plugDir).map(function (fn) {
 			if (fn.slice(-3).toLowerCase() != '.js')
@@ -87,7 +86,7 @@ BotPlugin.prototype = {
 			return false;
 		}
 
-		var eveIndex = this.reg (eventName, cb.bind(plugin.instance));
+		var eveIndex = this.reg (eventName, cb.bind(plugin));
 
 		if (eveIndex === null)
 			return false;
@@ -157,6 +156,8 @@ BotPlugin.prototype = {
 		var plugin = new thePlugin ();
 		plugin.bot = self.bot;
 		plugin.regEvent = self._regEvent.bind(self, self.bot, self.plugins[sPlugFile], plugin);
+		plugin.userAgent = sprintf('jjBot/%s (Plugin %s %s; Node %s; +https://github.com/JixunMoe/jjBot)',
+			plugin.bot.version, plugin.name || '<missing>', plugin.ver || '<missing>', process.version);
 		
 		var plugDir = plugin.plugDir || '';
 		Object.defineProperty(plugin, 'plugDir', {
@@ -169,7 +170,8 @@ BotPlugin.prototype = {
 			}
 		});
 
-		plugin.plugDir = plugDir;
+		if (plugDir)
+			plugin.plugDir = plugDir;
 
 		_.extend (plugInfo, {
 			name:   plugin.name  .toString(),
@@ -306,6 +308,10 @@ BotPlugin.prototype = {
 		var evLoop = new self.bot.Looper(self.listener[type].slice(), null, 0);
 
 		evLoop.setLooper(function (next, fooLooper) {
+			if (!fooLooper) {
+				next ();
+				return ;
+			}
 			args.splice(0, 1, next);
 
 			/**

@@ -3,7 +3,8 @@
 
 var http  = require ('http'),
 	https = require ('https'),
-	qs    = require ('querystring');
+	qs    = require ('querystring'),
+	_     = require ('underscore');
 
 var BotAuth   = require ('./Bot.Auth'),
 	BotWebAPI = require ('./Bot.WebAPI'),
@@ -36,26 +37,22 @@ var fixCookie = function (cookie) {
 };
 
 
-function objEmpty (obj) { return !Object.keys(obj).length; }
-function t () { return +new Date(); }
-function loopArray (that, arr, fooLoop, fooLast) {
+function time () { return +new Date(); }
+function loopArray (self, arr, fooLoop, fooLast) {
 	var arrLen   = arr.length,
 		curIndex = 0;
 
-	for (var i = 4, extraArgs = []; i < arguments.length; i++)
-		extraArgs.push (arguments[i]);
+	var extraArgs = [].slice.call(arguments, 4);
 
 	var fooNext = function () {
-		var args = extraArgs.slice();
+		var args = extraArgs.concat([].slice.call(arguments));
 		args.splice(0, 0, fooNext);
-		for (var i=0; i<arguments.length; i++)
-			args.push (arguments[i]);
 
 		if (curIndex >= arrLen) {
-			fooLast.apply(that, args);
+			fooLast.apply(self, args);
 		} else {
 			args.splice(1, 0, arr[curIndex]);
-			if (fooLoop) fooLoop.apply(that, args);
+			if (fooLoop) fooLoop.apply(self, args);
 		}
 
 		curIndex++;
@@ -64,22 +61,8 @@ function loopArray (that, arr, fooLoop, fooLast) {
 	process.nextTick (fooNext);
 }
 
-function delayFunction (that, foo, delay) {
-	for (var i = 3, extraArgs = []; i<arguments.length; i++)
-		extraArgs.push (arguments[i]);
-
-	return function () {
-		for (var i= 0, args = extraArgs.slice(); i<arguments.length; i++)
-			args.push (arguments[i]);
-
-		setTimeout(function () {
-			foo.apply(that, args);
-		}, delay || safeDelay());
-	};
-}
-
 function safeDelay () {
-	return 400 + 500 * Math.random();
+	return 20 + 100 * Math.random();
 }
 
 var CoreBot = function (conf, mod, mConf) {
@@ -89,6 +72,8 @@ var CoreBot = function (conf, mod, mConf) {
 		mod.web.initBot (this);
 
 	// Init. core modules.
+	this.package = require(__ROOT__ + 'package.json');
+	this.version = this.package.version;
 	this.conf = conf;
 	this.mod = mod;
 	this.log = mod.log;
@@ -104,14 +89,7 @@ var CoreBot = function (conf, mod, mConf) {
 	this.Plugin.init ();
 };
 
-function joinObj (def) {
-	for (var i=0; i<arguments.length; i++)
-		for (var x in arguments[i])
-			def[x] = arguments[i][x];
-	return def;
-}
-
-function arrFilter (arr, cb, def) {
+function arrFirstMatch (arr, cb, def) {
 	arr = arr || [];
 	for (var i = arr.length; i--; ) 
 		if (cb(arr[i]))
@@ -152,7 +130,9 @@ CoreBot.prototype = {
 				ids: []
 			})
 		}, function (data) {
-			that.parsePoll (data);
+			if (data !== false)
+				that.parsePoll (data);
+
 			clearTimeout (that.pollTimeThd);
 			that.pollTimeThd = setTimeout(function () { that.doPollLoop.apply (that); }, safeDelay());
 		}, 'd.web2.qq.com').on('socket', function (s) {
@@ -277,11 +257,10 @@ CoreBot.prototype = {
 	/**
 	 * UIN/GID to QQNum
 	 */
-	uinToNum: function (uin, isGroup, cb, numTry) {
+	uinToNum: function (uin, isGroup, cb) {
 		var that = this;
 		// Fix argument
 		uin = uin.toString();
-		numTry = numTry || 0;
 		
 		if (debug.CORE)
 			that.mod.log.info ('uinToNum:', uin);
@@ -304,10 +283,11 @@ CoreBot.prototype = {
 		that.API.get ('/api/get_friend_uin2', {
 			tuin: uin,
 			verifysession: '',
-			type: isGroup ? 4 : 1, // 可能记错
+			// 群组是 4, 好友是 1
+			type: isGroup ? 4 : 1,
 			code: '',
 			vfwebqq: that.auth.vfwebqq,
-			t: t()
+			t: time()
 		}, function (data) {
 			if (__FLAG__.offline || data && data.result) {
 				that.mod.queue.done (queueName, that.uinCache.table[gp][uin] = data.result.account.toString());
@@ -315,9 +295,6 @@ CoreBot.prototype = {
 			} else {
 				that.log.error ('Fetch num error:', data, '(' + queueName + ')');
 				that.mod.queue.unlock (queueName);
-				
-				if (numTry < that.conf.maxRetry)
-					that.uinToNum (uin, isGroup, cb, numTry + 1);
 			}
 		});
 	},
@@ -339,7 +316,7 @@ CoreBot.prototype = {
 				that.log.info ('QQ', realNum.toString(), '->', friend.nick);
 				that.friendHashTable.table[friend.uin.toString()] = realNum;
 				
-				delayFunction(this, next)();
+				next();
 			});
 		}, function () {
 			// Done.
@@ -367,15 +344,12 @@ CoreBot.prototype = {
 				vfwebqq: that.auth.vfwebqq
 			})
 		}, function (ret) {
-			if (ret.retcode == 50) {
+			if (ret && ret.retcode == 50) {
 				that.log.error ('Fetch friend list(50): ptWebQQ expired or hash_func updated, try reboot jjBot without --shareLogin.');
 				// process.exit (11);
-			} else if (ret.retcode) {
-				that.log.error ('Fetch friend list error:', ret);
-				
+			} else if (ret === false || ret.retcode) {
+				that.log.error ('Fetch friend list error:', ret, '; give up.');
 				that.mod.queue.unlock (queueName);
-				if (numTry < that.conf.maxRetry)
-					that.getFriends (cb, numTry + 1);
 			} else {
 				that.friends = ret.result;
 				that.friends.vfAuth = that.auth.vfwebqq;
@@ -388,9 +362,8 @@ CoreBot.prototype = {
 			}
 		});
 	},
-	getGroupList: function (cb, numTry) {
+	getGroupList: function (cb) {
 		var that = this;
-		numTry = numTry || 0;
 		var queueName = 'groupList';
 		if (that.mod.queue.reg (queueName, cb))
 			return;
@@ -406,9 +379,7 @@ CoreBot.prototype = {
 		}, function (ret) {
 			if (ret.retcode) {
 				that.mod.queue.unlock (queueName);
-				that.log.error ('Fetch group list error:', ret);
-				if (numTry < that.conf.maxRetry)
-					that.getGroupList (cb, numTry + 1);
+				that.log.error ('Fetch group list error:', ret, '; Give up.');
 			} else {
 				that.groupList = ret.result;
 				that.groupList.vfAuth = that.auth.vfwebqq;
@@ -436,8 +407,7 @@ CoreBot.prototype = {
 			this.uinToNum (groupId, true, function (realNum) {
 				that.log.info ('Fetch group num ->', realNum);
 				that.groupHashTable.table[groupId] = realNum;
-				
-				delayFunction(this, next)();
+				next();
 			});
 		}, function () {
 			that.log.info ('Fetch group num finish.');
@@ -453,19 +423,18 @@ CoreBot.prototype = {
 		this.log.info ('Fetch group list...');
 		// 抓取群组数据
 		loopArray (this, this.groupList.gnamelist, function (next, group) {
-			this.getGroupInfo (group.code.toString(), false, delayFunction(this, next));
+			this.getGroupInfo (group.code.toString(), false, next);
 		}, function () {
 			this.getAllGroupHashTable ();
 			this.mod.queue.done(queueName);
 			this.log.info ('Fetch group list done! Now searching for real id..');
 		});
 	},
-	getGroupInfo: function (gcode, bIgnoreCache, cb, numTry) {
+	getGroupInfo: function (gcode, bIgnoreCache, cb) {
 		var that = this;
-		numTry = numTry || 0;
 		if (!bIgnoreCache) {
 			var cache = that.mod.cache.load('groupInfo');
-			var gCode = arrFilter(that.groupList.gnamelist, function (g) { return g.code === gcode; }, null);
+			var gCode = arrFirstMatch(that.groupList.gnamelist, function (g) { return g.code === gcode; }, null);
 			// If cache exist, just return the cache.
 			if (gCode && cache[gCode.gid]) {
 				cb(cache[gCode.gid]);
@@ -484,18 +453,14 @@ CoreBot.prototype = {
 		that.API.get ('/api/get_group_info_ext2', {
 			gcode: gcode,
 			vfwebqq: that.auth.vfwebqq,
-			t: t()
+			t: time()
 		}, function (ret, data) {
-			if (objEmpty(ret) || ret.retcode) {
+			if (ret === false || _.isEmpty(ret) || ret.retcode) {
 				that.mod.queue.unlock (queueName);
-				that.log.error ('Failed to get group:', gcode);
-				// Only try twice
-				if (numTry < 2) {
-					that.getGroupInfo (gcode, true, null, numTry + 1);
-				} else {
-					// Group info expired?
-					that.getGroupList ();
-				}
+				that.log.error ('Failed to get group:', gcode, '; Try refresh list.');
+				
+				// Group info expired?
+				that.getGroupList ();
 				return;
 			}
 
@@ -560,7 +525,7 @@ CoreBot.prototype = {
 				this.log.err ('fixSign requires `group_code` attribute.');
 				return ;
 			}
-			joinObj(initMsgObj.r, {
+			_.extend(initMsgObj.r, {
 				group_code: msg.group_code,
 				key: this.auth.gface_key,
 				sig: this.auth.gface_sig
@@ -568,23 +533,22 @@ CoreBot.prototype = {
 		}
 		
 		if (isGroup) {
-			initMsgObj.r = JSON.stringify(joinObj(initMsgObj.r, {
+			initMsgObj.r = JSON.stringify(_.extend(initMsgObj.r, {
 				group_uin: targetId
 			}));
 		} else {
-			initMsgObj.r = JSON.stringify(joinObj(initMsgObj.r, {
+			initMsgObj.r = JSON.stringify(_.extend(initMsgObj.r, {
 				to: targetId,
 				face: 0
 			}));
 		}
 
-		var apiMsg = '/channel/' + (isGroup ? 'send_qun_msg2' : 'send_buddy_msg2');
+		var apiMsg = isGroup ? '/channel/send_qun_msg2' : '/channel/send_buddy_msg2';
 		
 		this.API.post (apiMsg, initMsgObj, function (data) {
 			this.mod.log.msg ('Send', isGroup ? 'G' : 'F', ':', targetId, '(uin)',
-							  msgContent,
-							  debug.sendFail ? data : ''
-							 );
+				msgContent, data === false ? 'Failed' : '');
+
 			next ();
 		}.bind(this), 'd.web2.qq.com');
 	},
@@ -602,7 +566,7 @@ CoreBot.prototype = {
 		if (debug.CORE)
 			that.mod.log.info ('getUser:', uin);
 		
-		cb (arrFilter(that.friends.info, function (u) { return uin === u.uin; }, {}));
+		cb (arrFirstMatch(that.friends.info, function (u) { return uin === u.uin; }, {}));
 	},
 	
 	getUserFromGroup: function (uin, gid, bNoCardNick, cb, numTry) {
@@ -629,7 +593,7 @@ CoreBot.prototype = {
 		}
 
 		// 选择用户数据
-		var newUserData = arrFilter (that.groups[gid].minfo, function (minfo) { return minfo.uin == uin; });
+		var newUserData = arrFirstMatch (that.groups[gid].minfo, function (minfo) { return minfo.uin == uin; });
 
 		if (!newUserData) {
 			// 新用户入群, 还没有数据; 请求重载
@@ -642,7 +606,7 @@ CoreBot.prototype = {
 			}
 			
 			// 抓取群组 gCode
-			var gCode = arrFilter(that.groupList.gnamelist, function (l) {
+			var gCode = arrFirstMatch(that.groupList.gnamelist, function (l) {
 				return l.gid.toString() === gid;
 			});
 			
@@ -667,7 +631,7 @@ CoreBot.prototype = {
 			});
 			return ;
 		}
-		var userCardInfo = arrFilter (that.groups[gid].cards, function (cards) { return cards.muin == uin; }, {});
+		var userCardInfo = arrFirstMatch (that.groups[gid].cards, function (cards) { return cards.muin == uin; }, {});
 		newUserData.profileName = newUserData.nick;
 		newUserData.nick = userCardInfo.card || newUserData.nick;
 		
@@ -676,7 +640,8 @@ CoreBot.prototype = {
 		});
 	},
 	fooProcMsg: function (msg, userData) {
-		// On User get
+		msg.raw_content = msg.content.slice();
+
 		msg.content.shift();
 		msg.strMsg = msg.content.map(function (e) {
 			if ('string' == typeof e)
@@ -719,6 +684,7 @@ CoreBot.prototype = {
 				return;
 				
 			case 121:
+				// 死了, 重新登录
 				that.log.error ('121 Death poll.');
 				process.exit (13);
 				return ;
@@ -726,6 +692,7 @@ CoreBot.prototype = {
 			case 0:
 				// 一切正常
 				break;
+
 			default:
 				that.log.info ('Poll:', poll);
 				break;
@@ -741,6 +708,7 @@ CoreBot.prototype = {
 					that.log.error ('机器人被T下线; 如果您是开发者请启用 --offline 进入离线模式调试避免占线。');
 					process.exit(10);
 					break;
+
 				case 'group_message':
 					if (this.bootWait)
 						return ;
@@ -772,11 +740,19 @@ CoreBot.prototype = {
 					break;
 					
 				case 'sys_g_msg':
+					if (this.bootWait)
+						return ;
+
 					this.mod.log.event ('SYS ->', msg);
+					this.Plugin.on('group-notify', msg);
 					break;
 					
 				default:
+					if (this.bootWait)
+						return ;
+
 					this.mod.log.event (ret[i].poll_type, '->', msg);
+					this.Plugin.on('poll-other', msg);
 					break;
 			}
 			if (bBreak) break;
