@@ -93,20 +93,20 @@ pluginChat.prototype = {
 		if(!this.disabled) {
 			this.count++;
 			if(this.count==this.conf.disableCount) {
-				reply(this.conf.name+'已停用，发送 '+(this.conf.usePrefixToDisable?(this.bot.conf.cmdPrefix+'/'):'')+this.conf.enableCmd+' 来启用我');
+				reply(this.conf.name+'已停用，发送 '+(this.conf.usePrefixToDisable?(this.bot.conf.cmdPrefix+'/'):'')+this.conf.enableCmd+' 可启用我哦~');
 				this.disabled=true;
 				this.count=0;
-			}else reply('已有'+this.count+'人请求停用'+this.conf.name+'，还需要 '+(this.conf.disableCount-this.count)+' 人请求才会执行~');
+			}else reply('已有'+this.count+'人请求停用'+this.conf.name+'，还需要'+(this.conf.disableCount-this.count)+'人请求才会执行~');
 		}
 	},
 	enable: function(next,reply) {
 		if(this.disabled) {
 			this.count++;
 			if(this.count==this.conf.disableCount) {
-				reply(this.conf.name+'已启用，发送 '+(this.conf.usePrefixToDisable?(this.bot.conf.cmdPrefix+'/'):'')+this.conf.disableCmd+' 来停用我');
+				reply(this.conf.name+'已启用，发送 '+(this.conf.usePrefixToDisable?(this.bot.conf.cmdPrefix+'/'):'')+this.conf.disableCmd+' 可停用我哦~');
 				this.disabled=false;
 				this.count=0;
-			}else reply('已有'+this.count+'人请求启用'+this.conf.name+'，还需要 '+(this.conf.disableCount-this.count)+' 人请求才会执行~');
+			}else reply('已有'+this.count+'人请求启用'+this.conf.name+'，还需要'+(this.conf.disableCount-this.count)+'人请求才会执行~');
 		}
 	},
 	load: function () {
@@ -164,7 +164,7 @@ pluginChat.prototype = {
 						reply('请按照 '+that.bot.conf.cmdPrefix+'/'+that.conf.teachCommand+' 收到的内容 '+that.conf.teachSeparator+' 回答的内容 的格式来教我说话哦');
 						return;
 					}
-					if(str[0].match(/\/[^.]*\);/)!==null || str[0].trim()==='') {
+					if(str[0].match(/\/[^.]*\);/)!==null || str[0].trim().length<2 || str[0].replace(/\s+/g,'').match(/^[%\.]+$/)!==null {
 						reply('请勿作死。');
 						return;
 					}
@@ -181,7 +181,7 @@ pluginChat.prototype = {
 						var realValue=_.template(str[1].replace(/\[([^\]]*)\]/g,function(match,item) {
 								return '{{'+that.conf.replyArgs[item]+'}}';
 							}));
-							reply(realValue({that:that,msg:msg}));
+							reply(realValue({that:that,msg:msg})+'\n'+(msg.ucdata.userNick || msg.user.nick)+'教会'+that.conf.name+'啦！对我说'+str[0].replace('%','[任意内容]')+'试试吧！');
 					});
 				});
 			}
@@ -189,7 +189,7 @@ pluginChat.prototype = {
 		that.regEvent('msg',function (next,str,msg,reply) {
 			if(!that.disabled) {
 				if(!msg.isGroup || Math.random()<=that.conf.answerRate) {
-					that.db.query ('select * from `jB_chat` where ? like concat(\'%\',ask,\'%\')', str, function (err, data) { //CANT SPLIT CHINESE, HAVE TO MATCH WITH KEYWORD
+					that.db.query ('select * from `jB_chat` where ? like concat("%",ask,"%")', str, function (err, data) { //CANT SPLIT CHINESE, HAVE TO MATCH WITH KEYWORD
 						if (data.length) {
 							data=SelectBestAnswer(data);
 							data.sort(function() {return 0.5-Math.random(); }); //找时间换掉
