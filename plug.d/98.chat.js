@@ -164,7 +164,7 @@ pluginChat.prototype = {
 						reply('请按照 '+that.bot.conf.cmdPrefix+'/'+that.conf.teachCommand+' 收到的内容 '+that.conf.teachSeparator+' 回答的内容 的格式来教我说话哦');
 						return;
 					}
-					if(str[0].match(/\/[^.]*\);/)!==null || str[0].trim().length<2 || str[0].replace(/\s+/g,'').match(/^[%\.]+$/)!==null {
+					if(str[0].match(/\/[^.]*\);/)!==null || str[0].trim().length<2 || str[0].replace(/\s+/g,'').match(/^[%\.]+$/)!==null) {
 						reply('请勿作死。');
 						return;
 					}
