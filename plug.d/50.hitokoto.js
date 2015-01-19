@@ -69,7 +69,7 @@ pluginHitokoto.prototype = {
 
 	register: function (self) {
 		self.regEvent ('msg', function (next, strMsg, msg, reply) {
-			if (msg.isGroup && self.needReply (String(msg.from_gid))) {
+			if (!self.lock && msg.isGroup && self.needReply (String(msg.from_gid))) {
 				https.get ({
 					mathod: 'GET',
 					host: 'api.hitokoto.us',
@@ -80,7 +80,13 @@ pluginHitokoto.prototype = {
 						'User-Agent': self.userAgent
 					}
 				}, self.handleRequest.bind(self, function (data) {
-					reply (self.template(JSON.parse(data)));
+					var hitokoto = JSON.parse(data);
+					if (hitokoto.error) {
+						self.lock = true;
+						self.bot.mod.log.warn ('Unable to fetch hitokoto, please check your config.\nError message:', hitokoto.error);
+						return ;
+					}
+					reply (self.template(hitokoto));
 				}));
 			}
 		});
