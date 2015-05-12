@@ -176,12 +176,18 @@ BotAuth.prototype = {
 		https.get ({
 			host: 'ui.ptlogin2.qq.com',
 			path: '/cgi-bin/login?daid=164&target=self&style=5&mibao_css=m_webqq&appid=1003903&enable_qlogin=0&no_verifyimg=1&s_url=http%3A%2F%2Fweb2.qq.com%2Floginproxy.html&f_url=loginerroralert&strong_login=1&login_state=10&t=20130903001'
-		}, onDataCallback(function (data) {
-			var newSig = data.match (/g_login_sig.*?"(.*?)"/)[1];
+		}, function (data) {
+			var newSig = '';
+			for(var i in data.headers['set-cookie']) {
+				if((newSig = data.headers['set-cookie'][i].match (/pt_login_sig=(.*?);/)) !== null) {
+					newSig = newSig[1];
+					break;
+				}
+			}
 			that.log.info ('New login_sig loaded:', newSig);
 			that.conf.login_sig = newSig;
 			if (cb) cb(newSig);
-		}));
+		});
 	},
 	checkVFCode: function (bNeedCode, vfCode, bitSalt) {
 		if (__FLAG__.offline)
