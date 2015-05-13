@@ -711,7 +711,7 @@ CoreBot.prototype = {
 
 				case 'group_message':
 					if (this.bootWait)
-						return ;
+						break ;
 
 					// that.log.msg (msg);
 					if (!this.groupList.gnamelist)
